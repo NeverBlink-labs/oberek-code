@@ -1,0 +1,5 @@
+type: yarrrml
+source:
+  name: model.yml
+  type: file
+format: json

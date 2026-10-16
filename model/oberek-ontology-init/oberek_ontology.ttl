@@ -1,0 +1,1426 @@
+# OBEREK Ontology
+# License: Creative Commons Attribution 4.0 International. https://creativecommons.org/licenses/by/4.0/
+# Creator: NeverBlink. https://www.neverblink.eu/
+# ---------------------------------------------------------
+# This ontology contains terms adapted from the following sources:
+# 1) DDI Alliance Controlled Vocabulary for Summary Statistic Type
+#    Available from: http://rdf-vocabulary.ddialliance.org/cv/SummaryStatisticType/2.1.2/
+#    Creator: DDI Alliance. https://ddialliance.org/
+#    Licence: Creative Commons Attribution 4.0 International. https://creativecommons.org/licenses/by/4.0/
+# 2) Quantities, Units, Dimensions and Types(QUDT)
+#    Available from: https://qudt.org/
+#    Creator: QUDT.org
+#    Citation DOI: https://doi.org/10.25504/FAIRsharing.d3pqw7
+#    Licence: Creative Commons Attribution 4.0 International. https://creativecommons.org/licenses/by/4.0/
+# 3) SAREF4MARI: an extension of SAREF for the maritime domain
+#    Available from: https://saref.etsi.org/saref4mari/v1.1.1/
+#    Creator: [Helen Mair RAWSTHORNE](https://www.linkedin.com/in/helen-mair-rawsthorne), [Mines Saint-Étienne](https://www.mines-stetienne.fr/)
+#    Licence: ETSI Software License (BSD-3-Clause)
+#               https://forge.etsi.org/etsi-software-license
+#               Copyright 2023 ETSI
+# 4) SAREF4WATR: an extension of SAREF for the water domain
+#    Available from: https://saref.etsi.org/saref4watr/v2.1.1/
+#    Creator: [Raúl García-Castro](http://www.garcia-castro.com/foaf.rdf#me) ([Universidad Politécnica de Madrid](https://www.upm.es/)
+#    Licence: ETSI Software License (BSD-3-Clause)
+#               https://forge.etsi.org/etsi-software-license
+#               Copyright 2019 ETSI
+# 5) WMO Codes Registry
+#    Available from: http://codes.wmo.int/
+#    Creator: World Meteorological Organization (WMO) https://wmo.int/
+#    Licence: Open Government Licence v3. https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/
+#
+# List of changes:
+#  - skos:prefLabel was changed to rdfs:label to ensure consistency in grib2:2-0-6 and sst:66851a3.
+#  - all labels were translated to 3 languages: English, Spanish, and Valencian. Missing labels were added.
+#  - dcterms prefix usage unified.
+#  - definitions and metadata trimmed for conciseness.
+#  - SAREF4MARI: defined qudt:applicableUnit as unit:MicroS-PER-CentiM.
+#  - OWL class structures removed except for owl:NamedIndividual.
+#  - 2026-10-13: deprecated sst:median, nb:iqr, nb:mad_median, wmdr:12312, grib2:2-0-6 and nb:fulla.
+#  - 2026-10-13: deprecated s4watr:Oxygen (SAREF4WATR defines it as oxygen saturation); dissolved
+#    oxygen concentration now uses bufr4_b13:083.
+
+@prefix saref: <https://saref.etsi.org/core/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix nb: <https://neverblink.eu/ontologies/oberek/> .
+@prefix qudt: <http://qudt.org/schema/qudt/> .
+@prefix unit: <http://qudt.org/vocab/unit/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix wmdr_terr: <http://codes.wmo.int/wmdr/ObservedVariableTerrestrial/> .
+@prefix wmdr: <http://codes.wmo.int/wmdr/ObservedVariableAtmosphere/> .
+@prefix wmo: <http://codes.wmo.int/common/quantity-kind/> .
+@prefix grib2: <http://codes.wmo.int/grib2/codeflag/4.2/> .
+@prefix s4mari: <https://saref.etsi.org/saref4mari/> .
+@prefix s4watr: <https://saref.etsi.org/saref4watr/> .
+@prefix qudt_qk: <http://qudt.org/vocab/quantitykind/> .
+@prefix skos:  <http://www.w3.org/2004/02/skos/core#> .
+@prefix sst: <http://rdf-vocabulary.ddialliance.org/cv/SummaryStatisticType/2.1.2/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix bufr4_b13: <http://codes.wmo.int/bufr4/b/13/> .
+
+# ---------------------------------------------------------
+# Ontology
+# ---------------------------------------------------------
+
+<https://neverblink.eu/ontologies/oberek/> a owl:Ontology ;
+    dcterms:title "OBEREK Ontology"@en ,
+                  "Ontología OBEREK"@es ,
+                  "Ontologia OBEREK"@ca-valencia ;
+    dcterms:creator <https://www.neverblink.eu/> ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    dcterms:modified "2026-10-13"^^xsd:date ;
+    owl:versionInfo "2026-10-13" ;
+    skos:changeNote "2026-10-13: deprecated terms that recorded data under the wrong IRI."@en ,
+                    "2026-10-13: términos obsoletos que registraban datos con un IRI incorrecto."@es ,
+                    "2026-10-13: termes obsolets que registraven dades amb un IRI incorrecte."@ca-valencia .
+
+# ---------------------------------------------------------
+# KEI properties
+# ---------------------------------------------------------
+
+nb:KEI a saref:Property ;
+    qudt:applicableUnit unit:UNITLESS ;
+    rdfs:label "Key Ecological Indicator"@en ,
+               "Indicador Ecológico Clave"@es ,
+               "Indicador Ecològic Clau"@ca-valencia .
+
+nb:KEI-1 a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:UNITLESS ;
+    qudt:upperBound 5 ;
+    qudt:lowerBound 1 ;
+    skos:broader nb:KEI ;
+    nb:hasInputFeature nb:chlorophyll, nb:secchiDiskDepth, nb:phycocyanin,
+                       s4mari:WaterConductivity, s4mari:Salinity,
+                       bufr4_b13:083, s4watr:Turbidity, qudt_qk:Acidity, s4mari:WaterTemperature ;
+    rdfs:label "KEI 1 — Water Quality"@en ,
+               "KEI 1 — Calidad del Agua"@es ,
+               "KEI 1 — Qualitat de l'Aigua"@ca-valencia ;
+    rdfs:comment "Summarises how selected water-quality parameters compare with project reference values and alert thresholds."@en , "Resume cómo se sitúan determinados parámetros de calidad del agua respecto a los valores de referencia y los umbrales de alerta del proyecto."@es , "Resumix com se situen determinats paràmetres de qualitat de l’aigua respecte als valors de referència i els llindars d’alerta del projecte."@ca-valencia .
+
+nb:KEI-2 a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:UNITLESS ;
+    qudt:upperBound 5 ;
+    qudt:lowerBound 1 ;
+    skos:broader nb:KEI ;
+    rdfs:label "KEI 2 — Habitat Health"@en ,
+               "KEI 2 — Salud del Hábitat"@es ,
+               "KEI 2 — Salut de l'Hàbitat"@ca-valencia ;
+    rdfs:comment "Summarises selected environmental pressures relevant to aquatic and terrestrial habitats using the configured KEI-2 inputs."@en , "Resume determinadas presiones ambientales relevantes para los hábitats acuáticos y terrestres mediante los datos de entrada configurados del KEI-2."@es , "Resumix determinades pressions ambientals rellevants per als hàbitats aquàtics i terrestres mitjançant les dades d’entrada configurades del KEI-2."@ca-valencia .
+
+nb:KEI-3 a saref:PropertyOfInterest ;
+    qudt:upperBound 5 ;
+    qudt:lowerBound 1 ;
+    qudt:applicableUnit unit:UNITLESS ;
+    skos:broader nb:KEI ;
+    nb:hasInputFeature nb:satisfactionScore, nb:KEI-1, nb:KEI-2 ;
+    rdfs:label "KEI-3 — Community feedback agreement"@en ,
+               "KEI-3 — Concordancia con la percepción de la comunidad"@es ,
+               "KEI-3 — Concordança amb la percepció de la comunitat"@ca-valencia ;
+    rdfs:comment "This KEI compares the community poll aggregate with the composite environmental level derived from KEI-1 and KEI-2. It measures agreement between them over a common temporal window."@en , "Este KEI compara la puntuación agregada de la encuesta a la comunidad con el nivel ambiental compuesto derivado del KEI-1 y el KEI-2. Mide la concordancia entre ambos en una ventana temporal común."@es , "Este KEI compara la puntuació agregada de l’enquesta a la comunitat amb el nivell ambiental compost derivat del KEI-1 i el KEI-2. Mesura la concordança entre els dos en una finestra temporal comuna."@ca-valencia .
+
+nb:KEI-2-Aquatic a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:UNITLESS ;
+    skos:broader nb:KEI-2 ;
+    nb:hasInputFeature nb:chlorophyll, nb:secchiDiskDepth, nb:phycocyanin,
+                       s4mari:WaterConductivity, s4mari:Salinity,
+                       bufr4_b13:083, s4watr:Turbidity, qudt_qk:Acidity, s4mari:WaterTemperature,
+                       wmo:windSpeed ;
+    rdfs:label "KEI 2 Aquatic"@en ,
+               "KEI 2 Acuático"@es ,
+               "KEI 2 Aquàtic"@ca-valencia ;
+    rdfs:comment "Aquatic component of KEI-2, based on configured IoT water-quality measurements, satellite aquatic estimates and wind speed."@en , "Componente acuático del KEI-2, basado en mediciones IoT de calidad del agua, estimaciones acuáticas satelitales y velocidad del viento configuradas en el proyecto."@es , "Component aquàtic del KEI-2, basat en mesures IoT de qualitat de l’aigua, estimacions aquàtiques satel·litàries i velocitat del vent configurades en el projecte."@ca-valencia .
+
+nb:KEI-2-Terrestrial a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:UNITLESS ;
+    skos:broader nb:KEI-2 ;
+    nb:hasInputFeature wmo:windSpeed, nb:pyricularia_risk_index ;
+    rdfs:label "KEI 2 Terrestrial"@en ,
+               "KEI 2 Terrestre"@es ,
+               "KEI 2 Terrestre"@ca-valencia ;
+    rdfs:comment "Terrestrial component of KEI-2, based on wind speed and the weather-derived Rice Blast Risk Index (PRI) as configured environmental-pressure proxies."@en , "Componente terrestre del KEI-2, basado en la velocidad del viento y el índice de riesgo de piriculariosis (PRI), derivado de las condiciones meteorológicas, como indicadores de presión ambiental configurados."@es , "Component terrestre del KEI-2, basat en la velocitat del vent i l’índex de risc de piriculariosi (PRI), derivat de les condicions meteorològiques, com a indicadors de pressió ambiental configurats."@ca-valencia .
+
+# ---------------------------------------------------------
+# Custom Units
+# ---------------------------------------------------------
+
+nb:FivePointScale a qudt:Unit ;
+    rdfs:label "Five Point Scale"@en ,
+               "Escala de Cinco Puntos"@es ,
+               "Escala de Cinc Punts"@ca-valencia ;
+    rdfs:comment "Adopted scale/format for the poll questions. Scale goes from 1 to 5."@en ,
+                 "Escala o formato adoptado para las preguntas de la encuesta. La escala va de 1 a 5."@es ,
+                 "Escala o format adoptat per a les preguntes de l'enquesta. L'escala va d'1 a 5."@ca-valencia .
+
+# ---------------------------------------------------------
+# Custom Classes
+# ---------------------------------------------------------
+
+nb:PropertyBaseline a rdfs:Class ;
+    rdfs:label "Property Baseline"@en ,
+               "Referencia de Propiedad"@es ,
+               "Referència de Propietat"@ca-valencia ;
+    rdfs:comment "A project-defined baseline configuration for an environmental property, including its reference value and deviation thresholds."@en ,
+                 "Configuración de referencia definida por el proyecto para una propiedad ambiental, que incluye su valor de referencia y sus umbrales de desviación."@es ,
+                 "Configuració de referència definida pel projecte per a una propietat ambiental, que inclou el seu valor de referència i els seus llindars de desviació."@ca-valencia .
+
+nb:DeviationDirection a rdfs:Class ;
+    rdfs:label "Deviation Direction"@en ,
+               "Dirección de Desviación"@es ,
+               "Direcció de Desviació"@ca-valencia ;
+    rdfs:comment "Indicates which direction of deviation from a reference value is treated as environmentally adverse in the project configuration."@en , "Indica qué sentido de desviación respecto a un valor de referencia se considera ambientalmente adverso en la configuración del proyecto."@es , "Indica quin sentit de desviació respecte a un valor de referència es considera ambientalment advers en la configuració del projecte."@ca-valencia .
+
+nb:Above a nb:DeviationDirection ;
+    rdfs:label "Above"@en ,
+               "Por encima"@es ,
+               "Per damunt"@ca-valencia ;
+    rdfs:comment "Primarily deviations above the baseline value are considered bad."@en ,
+                 "Se consideran negativas principalmente las desviaciones por encima del valor de referencia."@es ,
+                 "Es consideren negatives principalment les desviacions per damunt del valor de referència."@ca-valencia .
+
+nb:Below a nb:DeviationDirection ;
+    rdfs:label "Below"@en ,
+               "Por debajo"@es ,
+               "Per davall"@ca-valencia ;
+    rdfs:comment "Primarily deviations below the baseline value are considered bad."@en ,
+                 "Se consideran negativas principalmente las desviaciones por debajo del valor de referencia."@es ,
+                 "Es consideren negatives principalment les desviacions per davall del valor de referència."@ca-valencia .
+
+nb:RespondentCategory a rdfs:Class ;
+    rdfs:label "Respondent category"@en ,
+               "Categoría del encuestado"@es ,
+               "Categoria de l’enquestat"@ca-valencia ;
+    rdfs:comment "Enumeration of the self-declared connection a community-poll respondent has to the l'Albufera region (poll question 5). A nominal classification used to segment responses — not an ordinal scale, so its members carry no numeric value and are excluded from the satisfaction average."@en ,
+                 "Enumeración de la conexión autodeclarada que un encuestado de la encuesta comunitaria tiene con la región de l'Albufera (pregunta 5 de la encuesta). Una clasificación nominal utilizada para segmentar las respuestas, no una escala ordinal, por lo que sus miembros no tienen valor numérico y se excluyen del promedio de satisfacción."@es ,
+                 "Enumeració de la connexió autodeclarada que un enquestat de l'enquesta comunitària té amb la regió de l'Albufera (pregunta 5 de l'enquesta). Una classificació nominal utilitzada per a segmentar les respostes, no una escala ordinal, per la qual cosa els seus membres no tenen valor numèric i s'exclouen de la mitjana de satisfacció."@ca-valencia .
+
+nb:LocalResident a nb:RespondentCategory ;
+    nb:optionCode "1" ;
+    rdfs:label "Local resident or community member"@en ,
+               "Residente local o miembro de la comunidad"@es ,
+               "Resident local o membre de la comunitat"@ca-valencia .
+
+nb:PrimarySectorWorker a nb:RespondentCategory ;
+    nb:optionCode "2" ;
+    rdfs:label "Farmer, fisher, or agricultural worker"@en ,
+               "Agricultor, pescador o trabajador agrícola"@es ,
+               "Agricultor, pescador o treballador agrícola"@ca-valencia .
+
+nb:LocalBusinessRepresentative a nb:RespondentCategory ;
+    nb:optionCode "3" ;
+    rdfs:label "Local business owner or employee"@en ,
+               "Propietario o empleado de un negocio local"@es ,
+               "Propietari o empleat d'un negoci local"@ca-valencia .
+
+nb:Researcher a nb:RespondentCategory ;
+    nb:optionCode "4" ;
+    rdfs:label "Researcher or scientist"@en ,
+               "Investigador o científico"@es ,
+               "Investigador o científic"@ca-valencia .
+
+nb:PublicOfficial a nb:RespondentCategory ;
+    nb:optionCode "5" ;
+    rdfs:label "Public administration staff or official"@en ,
+               "Personal técnico o cargo de una administración pública"@es ,
+               "Personal tècnic o càrrec d’una administració pública"@ca-valencia .
+
+nb:OtherRespondent a nb:RespondentCategory ;
+    nb:optionCode "6" ;
+    rdfs:label "Other"@en ,
+               "Otra"@es ,
+               "Una altra"@ca-valencia .
+
+nb:Poll a rdfs:Class ;
+    rdfs:label "Community poll"@en ,
+               "Encuesta comunitaria"@es ,
+               "Enquesta comunitària"@ca-valencia ;
+    rdfs:comment "A set of questions presented to the community through the OBEREK dashboard."@en ,
+                 "Conjunto de preguntas presentadas a la comunidad a través de la plataforma OBEREK."@es ,
+                 "Conjunt de preguntes presentades a la comunitat a través de la plataforma OBEREK."@ca-valencia .
+
+nb:PollQuestion a rdfs:Class ;
+    rdfs:label "Poll question"@en ,
+               "Pregunta de encuesta"@es ,
+               "Pregunta d'enquesta"@ca-valencia ;
+    rdfs:comment "A single question within a community poll. It carries the dashboard's question identifier (saref:hasIdentifier) and declares, via nb:assessesProperty, which property its submitted answers populate. This lets ingestion route each answer by question_id — numeric answers feed nb:satisfactionScore, while the categorical question feeds nb:respondentCategory and is excluded from the satisfaction average."@en ,
+                 "Una sola pregunta dentro de una encuesta comunitaria. Lleva el identificador de pregunta de la plataforma (saref:hasIdentifier) y declara, mediante nb:assessesProperty, para qué propiedad registran valores las respuestas enviadas. Esto permite que la ingesta encamine cada respuesta por question_id: las respuestas numéricas alimentan nb:satisfactionScore, mientras que la pregunta categórica alimenta nb:respondentCategory y queda excluida de la media de satisfacción."@es ,
+                 "Una sola pregunta dins d'una enquesta comunitària. Porta l'identificador de pregunta de la plataforma (saref:hasIdentifier) i declara, mitjançant nb:assessesProperty, per a quina propietat registren valors les respostes enviades. Això permet que la ingesta encamine cada resposta per question_id: les respostes numèriques alimenten nb:satisfactionScore, mentre que la pregunta categòrica alimenta nb:respondentCategory i queda exclosa de la mitjana de satisfacció."@ca-valencia .
+
+nb:AnswerOption a rdfs:Class ;
+    rdfs:label "Answer option"@en ,
+               "Opción de respuesta"@es ,
+               "Opció de resposta"@ca-valencia ;
+    rdfs:comment "A single selectable answer offered for a poll question. It carries the dashboard answer code (nb:optionCode) and its presentation label (rdfs:label). For the numeric rating questions it also declares, via nb:mapsToValue, the point on the satisfaction scale that selecting it records; non-scoring options such as 'Don't know / No opinion' omit nb:mapsToValue and are therefore excluded from the satisfaction average."@en ,
+                 "Una única respuesta seleccionable ofrecida para una pregunta de encuesta. Lleva el código de respuesta de la plataforma (nb:optionCode) y su etiqueta de presentación (rdfs:label). Para las preguntas de valoración numérica también declara, mediante nb:mapsToValue, el punto de la escala de satisfacción que registra su selección; las opciones sin puntuación, como «No sé / Sin opinión», omiten nb:mapsToValue y por tanto se excluyen del promedio de satisfacción."@es ,
+                 "Una única resposta seleccionable oferida per a una pregunta d'enquesta. Porta el codi de resposta de la plataforma (nb:optionCode) i la seua etiqueta de presentació (rdfs:label). Per a les preguntes de valoració numèrica també declara, mitjançant nb:mapsToValue, el punt de l'escala de satisfacció que registra la seua selecció; les opcions sense puntuació, com ara «No ho sé / Sense opinió», ometen nb:mapsToValue i per tant s'exclouen de la mitjana de satisfacció."@ca-valencia .
+
+# ---------------------------------------------------------
+# Custom Properties
+# ---------------------------------------------------------
+
+nb:forProperty a rdf:Property ;
+    rdfs:label "For property"@en ,
+               "Para propiedad"@es ,
+               "Per a propietat"@ca-valencia ;
+    rdfs:comment "Links a PropertyBaseline instance to the environmental property it configures."@en ,
+                 "Vincula una instancia de PropertyBaseline con la propiedad ambiental que configura."@es ,
+                 "Vincula una instància de PropertyBaseline amb la propietat ambiental que configura."@ca-valencia .
+
+nb:applicableValueSet a rdf:Property ;
+    rdfs:label "Applicable value set"@en ,
+               "Conjunto de valores aplicable"@es ,
+               "Conjunt de valors aplicable"@ca-valencia ;
+    rdfs:comment "Links a nominal PropertyOfInterest to the enumeration class whose instances are its permitted values. The categorical counterpart of qudt:applicableUnit, which serves the same role for numeric properties."@en ,
+                 "Vincula una PropertyOfInterest nominal con la clase de enumeración cuyas instancias son sus valores permitidos. El equivalente categórico de qudt:applicableUnit, que cumple la misma función para las propiedades numéricas."@es ,
+                 "Vincula una PropertyOfInterest nominal amb la classe d'enumeració les instàncies de la qual són els seus valors permesos. L'equivalent categòric de qudt:applicableUnit, que compleix la mateixa funció per a les propietats numèriques."@ca-valencia .
+
+nb:hasQuestion a rdf:Property ;
+    rdfs:label "Has question"@en ,
+               "Tiene pregunta"@es ,
+               "Té pregunta"@ca-valencia ;
+    rdfs:comment "Links a nb:Poll to a nb:PollQuestion it contains."@en ,
+                 "Vincula un nb:Poll con un nb:PollQuestion que contiene."@es ,
+                 "Vincula un nb:Poll amb un nb:PollQuestion que conté."@ca-valencia .
+
+nb:assessesProperty a rdf:Property ;
+    rdfs:label "Assesses property"@en ,
+               "Evalúa propiedad"@es ,
+               "Avalua propietat"@ca-valencia ;
+    rdfs:comment "Links a nb:PollQuestion to the PropertyOfInterest that its answers populate — nb:satisfactionScore for the numeric rating questions, nb:respondentCategory for the categorical question."@en ,
+                 "Vincula un nb:PollQuestion con la PropertyOfInterest que rellenan sus respuestas: nb:satisfactionScore para las preguntas de valoración numérica y nb:respondentCategory para la pregunta categórica."@es ,
+                 "Vincula un nb:PollQuestion amb la PropertyOfInterest que omplin les seues respostes: nb:satisfactionScore per a les preguntes de valoració numèrica i nb:respondentCategory per a la pregunta categòrica."@ca-valencia .
+
+nb:hasAnswerOption a rdf:Property ;
+    rdfs:label "Has answer option"@en ,
+               "Tiene opción de respuesta"@es ,
+               "Té opció de resposta"@ca-valencia ;
+    rdfs:comment "Links a nb:PollQuestion to one of its answers — an nb:AnswerOption (rating questions) or an nb:RespondentCategory member (categorical question)."@en ,
+                 "Vincula una nb:PollQuestion con una de sus respuestas: una nb:AnswerOption (preguntas de valoración) o un miembro de nb:RespondentCategory (pregunta categórica)."@es ,
+                 "Vincula una nb:PollQuestion amb una de les seues respostes: una nb:AnswerOption (preguntes de valoració) o un membre de nb:RespondentCategory (pregunta categòrica)."@ca-valencia .
+
+nb:mapsToValue a rdf:Property ;
+    rdfs:label "Maps to value"@en ,
+               "Corresponde al valor"@es ,
+               "Correspon al valor"@ca-valencia ;
+    rdfs:comment "Scale point an answer option records for nb:satisfactionScore (1–5 on nb:FivePointScale). Absent for non-scoring options like 'Don't know', which are excluded from the average."@en ,
+                 "Punto de la escala que registra una opción de respuesta para nb:satisfactionScore (1–5 en nb:FivePointScale). Ausente en opciones sin puntuación como «No sé», que se excluyen del promedio."@es ,
+                 "Punt de l'escala que registra una opció de resposta per a nb:satisfactionScore (1–5 en nb:FivePointScale). Absent en opcions sense puntuació com «No ho sé», que s'exclouen de la mitjana."@ca-valencia .
+
+nb:selectedOption a rdf:Property ;
+    rdfs:label "Selected option"@en ,
+               "Opción seleccionada"@es ,
+               "Opció seleccionada"@ca-valencia ;
+    rdfs:comment "The answer a respondent chose, an nb:AnswerOption or nb:RespondentCategory member. Its question follows from nb:hasAnswerOption and its score from nb:mapsToValue, so answers count toward the per-question distribution while only scored options enter the average."@en ,
+                 "La respuesta elegida por el encuestado, una nb:AnswerOption o un miembro de nb:RespondentCategory. Su pregunta se obtiene de nb:hasAnswerOption y su puntuación de nb:mapsToValue, de modo que las respuestas cuentan en la distribución por pregunta mientras que solo las opciones puntuables entran en el promedio."@es ,
+                 "La resposta triada per l'enquestat, una nb:AnswerOption o un membre de nb:RespondentCategory. La seua pregunta s'obté de nb:hasAnswerOption i la seua puntuació de nb:mapsToValue, de manera que les respostes compten en la distribució per pregunta mentres que només les opcions puntuables entren en la mitjana."@ca-valencia .
+
+nb:submissionId a rdf:Property ;
+    rdfs:label "Submission identifier"@en ,
+               "Identificador de envío"@es ,
+               "Identificador d'enviament"@ca-valencia ;
+    rdfs:comment "Opaque random id shared by all answers of one submission. Enables per-respondent cross-tabulation (e.g. a distribution segmented by nb:respondentCategory). Holds no personal data."@en ,
+                 "Identificador opaco y aleatorio compartido por todas las respuestas de un mismo envío. Permite la tabulación cruzada por encuestado (p. ej. una distribución segmentada por nb:respondentCategory). No contiene datos personales."@es ,
+                 "Identificador opac i aleatori compartit per totes les respostes d'un mateix enviament. Permet la tabulació croada per enquestat (p. ex. una distribució segmentada per nb:respondentCategory). No conté dades personals."@ca-valencia .
+
+nb:optionCode a rdf:Property ;
+    rdfs:label "Option code"@en ,
+               "Código de opción"@es ,
+               "Codi d'opció"@ca-valencia ;
+    rdfs:comment "The dashboard answer code (1-6) identifying a selectable answer within its question. Lets ingestion resolve a submitted answer to the corresponding nb:AnswerOption or, for the categorical question, the corresponding nb:RespondentCategory member."@en , "Código de respuesta de la plataforma (1–6) que identifica una opción dentro de su pregunta. Permite que la ingesta asocie una respuesta enviada con la nb:AnswerOption correspondiente o, en la pregunta categórica, con el miembro de nb:RespondentCategory correspondiente."@es , "Codi de resposta de la plataforma (1–6) que identifica una opció dins de la seua pregunta. Permet que la ingesta associe una resposta enviada amb la nb:AnswerOption corresponent o, en la pregunta categòrica, amb el membre de nb:RespondentCategory corresponent."@ca-valencia .
+
+nb:componentOf a rdf:Property ;
+    rdfs:label "Component of"@en ,
+               "Componente de"@es ,
+               "Component de"@ca-valencia ;
+    rdfs:comment "This property is a constituent part of the referenced KEI — either a sub-indicator contributing directly to the score, or an intermediate value produced during its calculation."@en ,
+                 "Esta propiedad es una parte constituyente del KEI referenciado: o bien un subindicador que contribuye directamente a la puntuación, o bien un valor intermedio producido durante su cálculo."@es ,
+                 "Esta propietat és una part constituent del KEI referenciat: o bé un subindicador que contribuïx directament a la puntuació, o bé un valor intermedi produït durant el seu càlcul."@ca-valencia .
+
+nb:alternativeFor a rdf:Property ; 
+    rdfs:subPropertyOf skos:related ;
+    rdfs:label "Alternative for"@en ,
+               "Alternativa de"@es ,
+               "Alternativa de"@ca-valencia ;
+    rdfs:comment "Indicates that this property is an alternative formulation of the referenced property — it measures the same underlying concept from the same set of input parameters but through a different calculation method."@en ,
+                 "Indica que esta propiedad es una formulación alternativa de la propiedad referenciada: mide el mismo concepto subyacente a partir del mismo conjunto de parámetros de entrada, pero mediante un método de cálculo diferente."@es ,
+                 "Indica que esta propietat és una formulació alternativa de la propietat referenciada: mesura el mateix concepte subjacent a partir del mateix conjunt de paràmetres d'entrada, però mitjançant un mètode de càlcul diferent."@ca-valencia .
+
+nb:KEI-1_RAW a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:UNITLESS ;
+    qudt:upperBound 100 ;
+    qudt:lowerBound 0 ;
+    nb:alternativeFor nb:KEI-1;
+    rdfs:label "KEI-1 RAW score"@en ,
+               "Puntuación RAW KEI-1"@es ,
+               "Puntuació RAW KEI-1"@ca-valencia ;
+    rdfs:comment "Summarises how far the measured parameters deviate from their reference values in the adverse direction, on a scale from 0 to 100. Each parameter's deviation is averaged over the window, deviations in the favourable direction count as zero, and the score is 100 × (1 − mean deviation). A RAW score of 100 means no parameter deviates in the adverse direction; a mean deviation of 100% or more gives 0."@en ,
+                 "Resume cuánto se desvían los parámetros medidos de sus valores de referencia en el sentido adverso, en una escala de 0 a 100. La desviación de cada parámetro se promedia en la ventana temporal, las desviaciones en el sentido favorable cuentan como cero y la puntuación es 100 × (1 − desviación media). Una puntuación RAW de 100 significa que ningún parámetro se desvía en el sentido adverso; una desviación media del 100 % o más da 0."@es ,
+                 "Resumix quant es desvien els paràmetres mesurats dels seus valors de referència en el sentit advers, en una escala de 0 a 100. La desviació de cada paràmetre es fa en mitjana en la finestra temporal, les desviacions en el sentit favorable compten com a zero i la puntuació és 100 × (1 − desviació mitjana). Una puntuació RAW de 100 significa que cap paràmetre es desvia en el sentit advers; una desviació mitjana del 100 % o més dona 0."@ca-valencia .
+
+nb:KEI-1_NMeasured a saref:PropertyOfInterest ;
+    nb:componentOf nb:KEI-1 ;
+    qudt:applicableUnit unit:UNITLESS ;
+    rdfs:label "KEI-1 Number of Measured Parameters"@en ,
+               "KEI-1 Número de Parámetros Medidos"@es ,
+               "KEI-1 Nombre de Paràmetres Mesurats"@ca-valencia ;
+    rdfs:comment "Number of distinct parameters with at least one measurement in the window. Counted once per parameter, however many observations it contributed."@en ,
+                 "Número de parámetros distintos con al menos una medición en la ventana temporal. Cada parámetro se cuenta una sola vez, independientemente del número de observaciones que haya aportado."@es ,
+                 "Nombre de paràmetres diferents amb almenys una mesura en la finestra temporal. Cada paràmetre es compta una sola vegada, independentment del nombre d’observacions que haja aportat."@ca-valencia .
+
+nb:KEI-1_NFail a saref:PropertyOfInterest ;
+    nb:componentOf nb:KEI-1 ;
+    qudt:applicableUnit unit:UNITLESS ;
+    rdfs:label "KEI-1 — Number of parameters breaching the warning threshold"@en ,
+               "KEI-1 — Número de parámetros que incumplen el umbral de aviso"@es ,
+               "KEI-1 — Nombre de paràmetres que incompleixen el llindar d’avís"@ca-valencia ;
+    rdfs:comment "Number of parameters whose deviation from the project baseline reached that parameter's warning threshold during the window. Counted once per parameter, not once per observation."@en ,
+                 "Número de parámetros cuya desviación respecto al valor de referencia del proyecto alcanzó el umbral de aviso de ese parámetro durante la ventana temporal. Cada parámetro se cuenta una sola vez, no una vez por observación."@es ,
+                 "Nombre de paràmetres la desviació dels quals respecte al valor de referència del projecte va arribar al llindar d’avís d’eixe paràmetre durant la finestra temporal. Cada paràmetre es compta una sola vegada, no una vegada per observació."@ca-valencia .
+
+nb:KEI-1_NCrit a saref:PropertyOfInterest ;
+    nb:componentOf nb:KEI-1 ;
+    qudt:applicableUnit unit:UNITLESS ;
+    rdfs:label "KEI-1 — Number of parameters breaching the critical threshold"@en ,
+               "KEI-1 — Número de parámetros que incumplen el umbral crítico"@es ,
+               "KEI-1 — Nombre de paràmetres que incompleixen el llindar crític"@ca-valencia ;
+    rdfs:comment "Number of parameters whose deviation from the project baseline exceeded that parameter's critical threshold during the window. Counted once per parameter, not once per observation."@en ,
+                 "Número de parámetros cuya desviación respecto al valor de referencia del proyecto superó el umbral crítico de ese parámetro durante la ventana temporal. Cada parámetro se cuenta una sola vez, no una vez por observación."@es ,
+                 "Nombre de paràmetres la desviació dels quals respecte al valor de referència del projecte va superar el llindar crític d’eixe paràmetre durant la finestra temporal. Cada paràmetre es compta una sola vegada, no una vegada per observació."@ca-valencia .
+
+nb:KEI-2-Aquatic_RAW a saref:PropertyOfInterest ;
+    qudt:upperBound 100 ;
+    qudt:lowerBound 0 ;
+    nb:alternativeFor nb:KEI-2-Aquatic;
+    qudt:applicableUnit unit:UNITLESS ;
+    rdfs:label "KEI-2 Aquatic RAW score"@en ,
+               "Puntuación RAW KEI-2 Acuático"@es ,
+               "Puntuació RAW KEI-2 Aquàtic"@ca-valencia .
+
+nb:KEI-2-Aquatic_NMeasured a saref:PropertyOfInterest ;
+    nb:componentOf nb:KEI-2-Aquatic ;
+    qudt:applicableUnit unit:UNITLESS ;
+    rdfs:label "KEI-2 Aquatic Number of Measured Parameters"@en ,
+               "KEI-2 Acuático Número de Parámetros Medidos"@es ,
+               "KEI-2 Aquàtic Nombre de Paràmetres Mesurats"@ca-valencia ;
+    rdfs:comment "Number of distinct aquatic parameters with at least one measurement in the window. Counted once per parameter, however many observations it contributed."@en ,
+                 "Número de parámetros acuáticos distintos con al menos una medición en la ventana temporal. Cada parámetro se cuenta una sola vez, independientemente del número de observaciones que haya aportado."@es ,
+                 "Nombre de paràmetres aquàtics diferents amb almenys una mesura en la finestra temporal. Cada paràmetre es compta una sola vegada, independentment del nombre d’observacions que haja aportat."@ca-valencia .
+
+nb:KEI-2-Aquatic_NFail a saref:PropertyOfInterest ;
+    nb:componentOf nb:KEI-2-Aquatic ;
+    qudt:applicableUnit unit:UNITLESS ;
+    rdfs:label "KEI-2 Aquatic — Number of parameters breaching the warning threshold"@en ,
+               "KEI-2 Acuático — Número de parámetros que incumplen el umbral de aviso"@es ,
+               "KEI-2 Aquàtic — Nombre de paràmetres que incompleixen el llindar d’avís"@ca-valencia ;
+    rdfs:comment "Number of parameters whose deviation from the project baseline reached that parameter's warning threshold during the window. Counted once per parameter, not once per observation."@en ,
+                 "Número de parámetros cuya desviación respecto al valor de referencia del proyecto alcanzó el umbral de aviso de ese parámetro durante la ventana temporal. Cada parámetro se cuenta una sola vez, no una vez por observación."@es ,
+                 "Nombre de paràmetres la desviació dels quals respecte al valor de referència del projecte va arribar al llindar d’avís d’eixe paràmetre durant la finestra temporal. Cada paràmetre es compta una sola vegada, no una vegada per observació."@ca-valencia .
+
+nb:KEI-2-Aquatic_NCrit a saref:PropertyOfInterest ;
+    nb:componentOf nb:KEI-2-Aquatic ;
+    qudt:applicableUnit unit:UNITLESS ;
+    rdfs:label "KEI-2 Aquatic — Number of parameters breaching the critical threshold"@en ,
+               "KEI-2 Acuático — Número de parámetros que incumplen el umbral crítico"@es ,
+               "KEI-2 Aquàtic — Nombre de paràmetres que incompleixen el llindar crític"@ca-valencia ;
+    rdfs:comment "Number of parameters whose deviation from the project baseline exceeded that parameter's critical threshold during the window. Counted once per parameter, not once per observation."@en ,
+                 "Número de parámetros cuya desviación respecto al valor de referencia del proyecto superó el umbral crítico de ese parámetro durante la ventana temporal. Cada parámetro se cuenta una sola vez, no una vez por observación."@es ,
+                 "Nombre de paràmetres la desviació dels quals respecte al valor de referència del projecte va superar el llindar crític d’eixe paràmetre durant la finestra temporal. Cada paràmetre es compta una sola vegada, no una vegada per observació."@ca-valencia .
+
+nb:KEI-2-Terrestrial_RAW a saref:PropertyOfInterest ;
+    qudt:upperBound 100 ;
+    qudt:lowerBound 0 ;
+    nb:alternativeFor nb:KEI-2-Terrestrial;
+    qudt:applicableUnit unit:UNITLESS ;
+    rdfs:label "KEI-2 Terrestrial RAW score"@en ,
+               "Puntuación RAW KEI-2 Terrestre"@es ,
+               "Puntuació RAW KEI-2 Terrestre"@ca-valencia .
+
+nb:KEI-2-Terrestrial_NMeasured a saref:PropertyOfInterest ;
+    nb:componentOf nb:KEI-2-Terrestrial ;
+    qudt:applicableUnit unit:UNITLESS ;
+    rdfs:label "KEI-2 Terrestrial Number of Measured Parameters"@en ,
+               "KEI-2 Terrestre Número de Parámetros Medidos"@es ,
+               "KEI-2 Terrestre Nombre de Paràmetres Mesurats"@ca-valencia ;
+    rdfs:comment "Number of distinct terrestrial parameters with at least one measurement in the window. Counted once per parameter, however many observations it contributed."@en ,
+                 "Número de parámetros terrestres distintos con al menos una medición en la ventana temporal. Cada parámetro se cuenta una sola vez, independientemente del número de observaciones que haya aportado."@es ,
+                 "Nombre de paràmetres terrestres diferents amb almenys una mesura en la finestra temporal. Cada paràmetre es compta una sola vegada, independentment del nombre d’observacions que haja aportat."@ca-valencia .
+
+nb:KEI-2-Terrestrial_NFail a saref:PropertyOfInterest ;
+    nb:componentOf nb:KEI-2-Terrestrial ;
+    qudt:applicableUnit unit:UNITLESS ;
+    rdfs:label "KEI-2 Terrestrial — Number of parameters breaching the warning threshold"@en ,
+               "KEI-2 Terrestre — Número de parámetros que incumplen el umbral de aviso"@es ,
+               "KEI-2 Terrestre — Nombre de paràmetres que incompleixen el llindar d’avís"@ca-valencia ;
+    rdfs:comment "Number of parameters whose deviation from the project baseline reached that parameter's warning threshold during the window. Counted once per parameter, not once per observation."@en ,
+                 "Número de parámetros cuya desviación respecto al valor de referencia del proyecto alcanzó el umbral de aviso de ese parámetro durante la ventana temporal. Cada parámetro se cuenta una sola vez, no una vez por observación."@es ,
+                 "Nombre de paràmetres la desviació dels quals respecte al valor de referència del projecte va arribar al llindar d’avís d’eixe paràmetre durant la finestra temporal. Cada paràmetre es compta una sola vegada, no una vegada per observació."@ca-valencia .
+
+nb:KEI-2-Terrestrial_NCrit a saref:PropertyOfInterest ;
+    nb:componentOf nb:KEI-2-Terrestrial ;
+    qudt:applicableUnit unit:UNITLESS ;
+    rdfs:label "KEI-2 Terrestrial — Number of parameters breaching the critical threshold"@en ,
+               "KEI-2 Terrestre — Número de parámetros que incumplen el umbral crítico"@es ,
+               "KEI-2 Terrestre — Nombre de paràmetres que incompleixen el llindar crític"@ca-valencia ;
+    rdfs:comment "Number of parameters whose deviation from the project baseline exceeded that parameter's critical threshold during the window. Counted once per parameter, not once per observation."@en ,
+                 "Número de parámetros cuya desviación respecto al valor de referencia del proyecto superó el umbral crítico de ese parámetro durante la ventana temporal. Cada parámetro se cuenta una sola vez, no una vez por observación."@es ,
+                 "Nombre de paràmetres la desviació dels quals respecte al valor de referència del projecte va superar el llindar crític d’eixe paràmetre durant la finestra temporal. Cada paràmetre es compta una sola vegada, no una vegada per observació."@ca-valencia .
+
+nb:satisfactionScore a saref:PropertyOfInterest ;
+    qudt:applicableUnit nb:FivePointScale ;
+    rdfs:label "Satisfaction Score"@en ,
+               "Puntuación de Satisfacción"@es ,
+               "Puntuació de Satisfacció"@ca-valencia ;
+    rdfs:comment "Score reported for a question in a poll."@en ,
+                 "Puntuación registrada para una pregunta de la encuesta."@es ,
+                 "Puntuació registrada per a una pregunta de l’enquesta."@ca-valencia .
+
+nb:respondentCategory a saref:PropertyOfInterest ;
+    nb:applicableValueSet nb:RespondentCategory ;
+    rdfs:label "Respondent category"@en ,
+               "Categoría del encuestado"@es ,
+               "Categoria de l’enquestat"@ca-valencia ;
+    rdfs:comment "The respondent's self-declared connection to the l'Albufera region (poll question 5). A nominal feature whose value is a member of the nb:RespondentCategory enumeration; used to segment poll responses and excluded from the satisfaction score."@en ,
+                 "La conexión autodeclarada del encuestado con la región de l'Albufera (pregunta 5 de la encuesta). Una característica nominal cuyo valor es un miembro de la enumeración nb:RespondentCategory; se utiliza para segmentar las respuestas y se excluye de la puntuación de satisfacción."@es ,
+                 "La connexió autodeclarada de l'enquestat amb la regió de l'Albufera (pregunta 5 de l'enquesta). Una característica nominal el valor de la qual és un membre de l'enumeració nb:RespondentCategory; s'utilitza per a segmentar les respostes i s'exclou de la puntuació de satisfacció."@ca-valencia .
+
+nb:chlorophyll a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:MicroGM-PER-L ;
+    rdfs:label "Chlorophyll-a"@en ,
+               "Clorofila-a"@es ,
+               "Clorofil·la-a"@ca-valencia ;
+    rdfs:comment "A pigment found in algae and a standard proxy for phytoplankton biomass. Higher chlorophyll-a usually means more algal growth and greater eutrophication pressure."@en ,
+                 "Un pigmento presente en las algas y un indicador estándar de la biomasa de fitoplancton. Una mayor clorofila-a suele indicar un mayor crecimiento de algas y una mayor presión de eutrofización."@es ,
+                 "Un pigment present en les algues i un indicador indirecte estàndard de la biomassa de fitoplàncton. Una clorofil·la-a més alta normalment significa un major creixement d'algues i una major pressió d'eutrofització."@ca-valencia .
+
+nb:secchiDiskDepth a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:M ;
+    rdfs:label "Secchi depth / SDD"@en ,
+               "Profundidad de Secchi / SDD"@es ,
+               "Profunditat de Secchi / SDD"@ca-valencia ;
+    rdfs:comment "A measure of water transparency. Higher Secchi depth means clearer water; lower Secchi depth means murkier water and less light reaching underwater habitats."@en ,
+                 "Una medida de la transparencia del agua. Una mayor profundidad de Secchi significa agua más clara; una menor profundidad de Secchi significa agua más turbia y menos luz que llega a los hábitats subacuáticos."@es ,
+                 "Una mesura de la transparència de l'aigua. Una profunditat de Secchi més alta significa aigua més clara; una profunditat de Secchi més baixa significa aigua més tèrbola i menys llum que arriba als hàbitats subaquàtics."@ca-valencia .
+
+nb:phycocyanin a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:MicroGM-PER-L ;
+    rdfs:label "Phycocyanin"@en ,
+               "Ficocianina"@es ,
+               "Ficocianina"@ca-valencia ;
+    rdfs:comment "A pigment used as a proxy for cyanobacterial biomass. A stronger phycocyanin signal can indicate greater bloom concern but does not directly measure toxins."@en , "Un pigmento utilizado como indicador de la biomasa de cianobacterias. Una señal más intensa de ficocianina puede indicar mayor preocupación por proliferaciones, pero no mide directamente las toxinas."@es , "Un pigment utilitzat com a indicador de la biomassa de cianobacteris. Un senyal més intens de ficocianina pot indicar més preocupació per proliferacions, però no mesura directament les toxines."@ca-valencia .
+
+nb:ndwi a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:UNITLESS ;
+    rdfs:label "NDWI"@en ,
+               "NDWI"@es ,
+               "NDWI"@ca-valencia ;
+    rdfs:comment "Normalized Difference Water Index."@en , "Índice de diferencia normalizada de agua (NDWI)."@es , "Índex de diferència normalitzada d’aigua (NDWI)."@ca-valencia .
+
+nb:fcover a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:UNITLESS ;
+    rdfs:label "FCOVER"@en ,
+               "FCOVER"@es ,
+               "FCOVER"@ca-valencia ;
+    rdfs:comment "The fraction of ground covered by green vegetation. Lower-than-expected values suggest less green cover, which may indicate habitat degradation or stress."@en ,
+                 "La fracción de suelo cubierta por vegetación verde. Valores inferiores a lo esperado sugieren menos cubierta verde, lo que puede indicar degradación o estrés del hábitat."@es ,
+                 "La fracció de sòl coberta per vegetació verda. Uns valors més baixos de l'esperat suggerixen menys cobertura verda, la qual cosa pot indicar degradació o estrés de l'hàbitat."@ca-valencia .
+
+nb:ndvi a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:UNITLESS ;
+    rdfs:label "NDVI"@en ,
+               "NDVI"@es ,
+               "NDVI"@ca-valencia ;
+    rdfs:comment "A satellite index that measures vegetation greenness. Lower values usually mean less green cover or more stressed vegetation, while higher values usually mean greater greenness or green biomass."@en ,
+                 "Un índice satelital que mide el verdor de la vegetación. Los valores más bajos suelen indicar menos cubierta verde o vegetación más estresada, mientras que los valores más altos suelen indicar mayor verdor o biomasa verde."@es ,
+                 "Un índex de satèl·lit que mesura la verdor de la vegetació. Els valors més baixos solen indicar menys coberta verda o vegetació més estressada, mentre que els valors més alts solen indicar més verdor o biomassa verda."@ca-valencia .
+
+nb:ndmi a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:UNITLESS ;
+    rdfs:label "NDMI"@en ,
+               "NDMI"@es ,
+               "NDMI"@ca-valencia ;
+    rdfs:comment "A satellite index related to vegetation water content. Lower values generally suggest drier or more water-stressed vegetation."@en ,
+                 "Un índice satelital relacionado con el contenido de agua de la vegetación. Los valores más bajos suelen indicar una vegetación más seca o con mayor estrés hídrico."@es ,
+                 "Un índex de satèl·lit relacionat amb el contingut d'aigua de la vegetació. Uns valors més baixos solen suggerir una vegetació més seca o amb més estrés hídric."@ca-valencia .
+
+nb:evi a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:UNITLESS ;
+    rdfs:label "EVI"@en ,
+               "EVI"@es ,
+               "EVI"@ca-valencia ;
+    rdfs:comment "A vegetation index similar to NDVI, but less sensitive to some atmospheric effects and more useful in denser vegetation. Lower-than-expected values may indicate vegetation stress."@en ,
+                 "Un índice de vegetación similar al NDVI, pero menos sensible a algunos efectos atmosféricos y más útil en vegetación densa. Valores inferiores a lo esperado pueden indicar estrés de la vegetación."@es ,
+                 "Un índex de vegetació semblant al NDVI, però menys sensible a alguns efectes atmosfèrics i més útil en vegetació més densa. Uns valors més baixos de l'esperat poden indicar estrés de la vegetació."@ca-valencia .
+
+nb:waterCoverage a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:PERCENT ;
+    rdfs:label "Water Coverage"@en ,
+               "Cobertura de Agua"@es ,
+               "Cobertura d'Aigua"@ca-valencia ;
+    rdfs:comment "The proportion of the observed area covered by water."@en ,
+                 "La proporción del área observada cubierta por agua."@es ,
+                 "La proporció de la zona observada coberta per aigua."@ca-valencia .
+
+nb:vegetationCoverage a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:PERCENT ;
+    rdfs:label "Vegetation Coverage"@en ,
+               "Cobertura de Vegetación"@es ,
+               "Cobertura de Vegetació"@ca-valencia ;
+    rdfs:comment "Share of pixels in the location area where FCOVER is above 0.2."@en ,
+                 "Porcentaje de píxeles del área de la ubicación en los que el FCOVER supera 0,2."@es ,
+                 "Percentatge de píxels de l'àrea de la ubicació en què el FCOVER supera 0,2."@ca-valencia .
+
+nb:hoja a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:NUM ;
+    dcterms:replaces nb:fulla ;
+    rdfs:label "Leaf wetness (Hoja)"@en ,
+               "Humectación foliar (Hoja)"@es ,
+               "Humectació foliar (Hoja)"@ca-valencia ;
+    rdfs:comment "The presence and duration of liquid water on foliage, observed using leaf-wetness measurements, on a 0–15 scale where 0 = dry and 15 = fully wet."@en ,
+                 "La presencia y la duración de agua líquida sobre el follaje, observadas mediante mediciones de humectación foliar, en una escala de 0 a 15 en la que 0 = seco y 15 = completamente mojado."@es ,
+                 "La presència i la duració d'aigua líquida sobre el fullatge, observades mitjançant mesures d'humectació foliar, en una escala de 0 a 15 en què 0 = sec i 15 = completament mullat."@ca-valencia .
+
+nb:fulla a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:NUM ;
+    rdfs:label "Fulla"@en ,
+               "Humedad foliar (Fulla)"@es ,
+               "Humitat foliar (Fulla)"@ca-valencia ;
+    rdfs:comment "The presence and duration of liquid moisture on a plant's foliage." ;
+    owl:deprecated true ;
+    dcterms:isReplacedBy nb:hoja ;
+    dcterms:modified "2026-10-13"^^xsd:date ;
+    skos:historyNote "Renamed to nb:hoja on 2026-10-05. No values were stored."@en ,
+                     "Renombrado como nb:hoja el 2026-10-05. No se almacenaron valores."@es ,
+                     "Reanomenat com a nb:hoja el 2026-10-05. No es van emmagatzemar valors."@ca-valencia .
+
+nb:hoja_min a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:NUM ;
+    rdfs:label "Leaf wetness minimum (Hoja min)"@en ,
+               "Humectación foliar mínima (Hoja min)"@es ,
+               "Humectació foliar mínima (Hoja min)"@ca-valencia ;
+    rdfs:comment "Minimum leaf wetness today, since 00:00, on the same 0-15 scale as leaf wetness." .
+
+nb:hoja_max a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:NUM ;
+    rdfs:label "Leaf wetness maximum (Hoja max)"@en ,
+               "Humectación foliar máxima (Hoja max)"@es ,
+               "Humectació foliar màxima (Hoja max)"@ca-valencia ;
+    rdfs:comment "Maximum leaf wetness today, since 00:00, on the same 0-15 scale as leaf wetness." .
+
+nb:hoja_h a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:HR ;
+    rdfs:label "Leaf wetness hours today (Hoja h)"@en ,
+               "Horas de hoja húmeda hoy (Hoja h)"@es ,
+               "Hores de fulla humida hui (Hoja h)"@ca-valencia ;
+    rdfs:comment "Hours of wet leaf today, counted since 00:00." .
+
+nb:hoja_h24 a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:HR ;
+    rdfs:label "Leaf wetness hours, last 24 h (Hoja h24)"@en ,
+               "Horas de hoja húmeda, últimas 24 h (Hoja h24)"@es ,
+               "Hores de fulla humida, últimes 24 h (Hoja h24)"@ca-valencia ;
+    rdfs:comment "Hours of wet leaf during the last 24 hours." .
+
+nb:pyricularia_risk_index a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:UNITLESS ;
+    qudt:lowerBound 0 ; 
+    qudt:upperBound 2 ;
+    nb:hasInputFeature nb:hoja, s4watr:ExternalTemperature,
+                       s4watr:Humidity, s4watr:Precipitation ;
+    rdfs:label "Rice Blast Risk Index"@en ,
+               "Índice de Riesgo de Piriculariosis"@es ,
+               "Índex de Risc de Piriculariosi"@ca-valencia ;
+    rdfs:comment "PRI estimates whether recent weather conditions favour rice blast caused by Pyricularia oryzae. It is derived from local agrometeorological observations using the project-defined rule and contributes to KEI-2; it does not detect the disease."@en , "El PRI estima si las condiciones meteorológicas recientes favorecen la piriculariosis causada por Pyricularia oryzae. Se deriva de observaciones agrometeorológicas locales mediante la regla definida por el proyecto e interviene en el KEI-2; no detecta la enfermedad."@es , "El PRI estima si les condicions meteorològiques recents afavorixen la piriculariosi causada per Pyricularia oryzae. Es deriva d’observacions agrometeorològiques locals mitjançant la regla definida pel projecte i intervé en el KEI-2; no detecta la malaltia."@ca-valencia .
+
+nb:baselineValue a rdf:Property ;
+    rdfs:label "Baseline value"@en ,
+               "Valor de referencia"@es ,
+               "Valor de referència"@ca-valencia ;
+    rdfs:comment "Project-configured reference value for this property in its applicable unit, used as a comparison point for OBEREK scoring."@en , "Valor de referencia configurado por el proyecto para este parámetro en su unidad correspondiente, utilizado como punto de comparación en el cálculo de los indicadores de OBEREK."@es , "Valor de referència configurat pel projecte per a este paràmetre en la seua unitat corresponent, utilitzat com a punt de comparació en el càlcul dels indicadors d’OBEREK."@ca-valencia .
+
+nb:warningThreshold a rdf:Property ;
+    qudt:applicableUnit unit:PERCENT ;
+    rdfs:label "Warning threshold"@en ,
+               "Umbral de aviso"@es ,
+               "Llindar d’avís"@ca-valencia ;
+    rdfs:comment "Percentage deviation from the baseline value at which this property enters a warning state (deviation ≥ threshold). For the rice blast risk index, whose baseline is 0, the deviation is its level (0–2) divided by 2."@en ,
+                 "Desviación porcentual respecto al valor de referencia a partir de la cual esta propiedad entra en estado de aviso (desviación ≥ umbral). Para el índice de riesgo de piriculariosis, cuyo valor de referencia es 0, la desviación es su nivel (0–2) dividido entre 2."@es ,
+                 "Desviació percentual respecte al valor de referència a partir de la qual esta propietat entra en estat d'avís (desviació ≥ llindar). Per a l'índex de risc de piriculariosi, el valor de referència del qual és 0, la desviació és el seu nivell (0–2) dividit entre 2."@ca-valencia .
+
+nb:criticalThreshold a rdf:Property ;
+    qudt:applicableUnit unit:PERCENT ;
+    rdfs:label "Critical threshold"@en ,
+               "Umbral crítico"@es ,
+               "Llindar crític"@ca-valencia ;
+    rdfs:comment "Percentage deviation from the baseline value at which this property enters a critical state (deviation > threshold). For the rice blast risk index, whose baseline is 0, the deviation is its level (0–2) divided by 2."@en ,
+                 "Desviación porcentual respecto al valor de referencia a partir de la cual esta propiedad entra en estado crítico (desviación > umbral). Para el índice de riesgo de piriculariosis, cuyo valor de referencia es 0, la desviación es su nivel (0–2) dividido entre 2."@es ,
+                 "Desviació percentual respecte al valor de referència a partir de la qual esta propietat entra en estat crític (desviació > llindar). Per a l'índex de risc de piriculariosi, el valor de referència del qual és 0, la desviació és el seu nivell (0–2) dividit entre 2."@ca-valencia .
+
+nb:deviationDirection a rdf:Property ;
+    rdfs:label "Deviation direction"@en ,
+               "Dirección de desviación"@es ,
+               "Direcció de desviació"@ca-valencia ;
+    rdfs:comment "The primary direction of deviation from a reference value treated as adverse in the project configuration. Absent when both directions are treated symmetrically."@en , "El sentido principal de desviación respecto a un valor de referencia considerado adverso en la configuración del proyecto. No se indica cuando ambos sentidos se tratan de forma simétrica."@es , "El sentit principal de desviació respecte a un valor de referència considerat advers en la configuració del projecte. No s’indica quan els dos sentits es tracten de manera simètrica."@ca-valencia .
+
+nb:bidirectional a rdf:Property ;
+    rdfs:label "Bidirectional"@en ,
+               "Bidireccional"@es ,
+               "Bidireccional"@ca-valencia ;
+    rdfs:comment "If true, deviation in both directions from the baseline triggers thresholds. If false, only the direction indicated by nb:deviationDirection is considered bad."@en ,
+                 "Si es verdadero, la desviación en ambas direcciones respecto al valor de referencia activa los umbrales. Si es falso, solo se considera negativa la dirección indicada por nb:deviationDirection."@es ,
+                 "Si és cert, la desviació en les dues direccions respecte al valor de referència activa els llindars. Si és fals, només es considera negativa la direcció indicada per nb:deviationDirection."@ca-valencia .
+
+# Provenance of a baseline. The reference value and the warning / critical
+# thresholds are recorded separately because they often come from different
+# places. Each is a Type (what kind of evidence) plus a Source (the citation).
+
+nb:baselineSourceType a rdf:Property ;
+    rdfs:label "Baseline source type"@en ,
+               "Tipo de fuente del valor de referencia"@es ,
+               "Tipus de font del valor de referència"@ca-valencia ;
+    rdfs:comment "The kind of evidence the reference value is based on, e.g. local technical evidence, regulation or project / expert judgement." .
+
+nb:baselineSource a rdf:Property ;
+    rdfs:label "Baseline source"@en ,
+               "Fuente del valor de referencia"@es ,
+               "Font del valor de referència"@ca-valencia ;
+    rdfs:comment "The documents, regulation or decision the reference value is taken from." .
+
+nb:thresholdSourceType a rdf:Property ;
+    rdfs:label "Threshold source type"@en ,
+               "Tipo de fuente de los umbrales"@es ,
+               "Tipus de font dels llindars"@ca-valencia ;
+    rdfs:comment "The kind of evidence the warning and critical thresholds are based on." .
+
+nb:thresholdSource a rdf:Property ;
+    rdfs:label "Threshold source"@en ,
+               "Fuente de los umbrales"@es ,
+               "Font dels llindars"@ca-valencia ;
+    rdfs:comment "The documents, regulation or decision the warning and critical thresholds are taken from." .
+
+# Attribution. A data-source device also carries dcterms:publisher (who published
+# the data), dcterms:license (the licence or reuse conditions it is under) and
+# cc:attributionName (the name to credit wherever the data is shown).
+
+nb:attributionText a rdf:Property ;
+    rdfs:label "Attribution text"@en ,
+               "Texto de atribución"@es ,
+               "Text d'atribució"@ca-valencia ;
+    rdfs:comment "Exact credit wording that the data's licence requires next to the data, followed by the year of the data shown. Used where the licence fixes the wording, as the Sentinel Data Legal Notice does." .
+
+nb:requiresLastUpdateDate a rdf:Property ;
+    rdfs:label "Requires last update date"@en ,
+               "Requiere fecha de última actualización"@es ,
+               "Requereix data de l'última actualització"@ca-valencia ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Whether the reuse conditions ask for the date of the last update of the data to be shown next to it." .
+
+nb:republishable a rdf:Property ;
+    rdfs:label "Republishable"@en ,
+               "Republicable"@es ,
+               "Republicable"@ca-valencia ;
+    rdfs:range xsd:boolean ;
+    rdfs:comment "Whether the licence lets OBEREK show the raw readings. When false, the readings are only used to calculate indicators." .
+
+nb:SensorRange a rdfs:Class ;
+    rdfs:label "Sensor plausible range"@en ,
+               "Rango plausible del sensor"@es ,
+               "Rang plausible del sensor"@ca-valencia ;
+    rdfs:comment "A plausible minimum/maximum range for a sensor-measured property, used on ingestion to drop impossible readings caused by sensor malfunction (sentinel/error codes or out-of-range spikes). This is NOT an ecological threshold; it only bounds what the hardware can physically report."@en ,
+                 "Rango plausible de valores mínimo y máximo para una propiedad medida por un sensor, utilizado en la ingesta para descartar lecturas imposibles causadas por fallos del sensor (códigos de error o centinela, o picos fuera de rango). NO es un umbral ecológico; solo delimita lo que el equipo puede registrar físicamente."@es ,
+                 "Rang plausible de valors mínim i màxim per a una propietat mesurada per un sensor, utilitzat en la ingesta per a descartar lectures impossibles causades per fallades del sensor (codis d'error o sentinella, o pics fora de rang). NO és un llindar ecològic; només delimita el que l'equip pot registrar físicament."@ca-valencia .
+
+nb:plausibleMin a rdf:Property ;
+    rdfs:label "Plausible minimum"@en ,
+               "Mínimo plausible"@es ,
+               "Mínim plausible"@ca-valencia ;
+    rdfs:comment "Lowest value a working sensor can plausibly report for this property. Readings below it are treated as malfunction and dropped on ingestion." .
+
+nb:plausibleMax a rdf:Property ;
+    rdfs:label "Plausible maximum"@en ,
+               "Máximo plausible"@es ,
+               "Màxim plausible"@ca-valencia ;
+    rdfs:comment "Highest value a working sensor can plausibly report for this property. Readings above it are treated as malfunction and dropped on ingestion." .
+
+nb:iqr a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:UNITLESS ;
+    rdfs:label "Inter-Quartile Range"@en ,
+               "Rango Intercuartílico"@es ,
+               "Rang Interquartílic"@ca-valencia ;
+    owl:deprecated true ;
+    dcterms:isReplacedBy sst:a7f7339 ;
+    dcterms:modified "2026-10-13"^^xsd:date ;
+    skos:historyNote "Replaced by the DDI term on 2026-10-13."@en ,
+                     "Sustituido por el término DDI el 2026-10-13."@es ,
+                     "Substituït pel terme DDI el 2026-10-13."@ca-valencia .
+
+nb:mad_median a saref:PropertyOfInterest ;
+    qudt:applicableUnit unit:UNITLESS ;
+    rdfs:label "Median absolute deviation"@en ,
+               "Desviación absoluta mediana"@es ,
+               "Desviació absoluta mediana"@ca-valencia ;
+    owl:deprecated true ;
+    dcterms:isReplacedBy sst:5dc5781 ;
+    dcterms:modified "2026-10-13"^^xsd:date ;
+    skos:historyNote "Replaced by the DDI term on 2026-10-13. Values are median, not mean, absolute deviations."@en ,
+                     "Sustituido por el término DDI el 2026-10-13. Los valores son desviaciones absolutas medianas, no medias."@es ,
+                     "Substituït pel terme DDI el 2026-10-13. Els valors són desviacions absolutes medianes, no mitjanes."@ca-valencia .
+
+nb:hasAquaticBoundingBox a rdf:Property ;
+    rdfs:subPropertyOf geo:hasGeometry ;
+    rdfs:label "Has water tile"@en ,
+               "Tiene área de agua asociada"@es ,
+               "Té àrea d’aigua associada"@ca-valencia ;
+    rdfs:comment "The open-water geometry paired with a location, used for satellite estimates of chlorophyll-a, Secchi depth and phycocyanin. Each location has one such geometry, configured separately from its location-area geometry; for Global it lies inside that area. The selection uses open-lagoon pixels rather than seasonally flooded rice fields. Other satellite land/coverage indices use the location area, and ground sensors remain point measurements."@en ,
+                 "Geometría de aguas abiertas asociada a una ubicación, utilizada para las estimaciones satelitales de clorofila-a, profundidad de Secchi y ficocianina. Cada ubicación tiene una geometría de este tipo, configurada por separado de la geometría del área de la ubicación; en Global queda dentro de esa área. La selección utiliza píxeles de laguna abierta en lugar de arrozales inundados estacionalmente. Los demás índices satelitales terrestres y de cobertura utilizan el área de la ubicación, y los sensores terrestres proporcionan mediciones puntuales."@es ,
+                 "Geometria d’aigües obertes associada a una ubicació, utilitzada per a les estimacions satel·litàries de clorofil·la-a, profunditat de Secchi i ficocianina. Cada ubicació té una geometria d’este tipus, configurada per separat de la geometria de l’àrea de la ubicació; en Global queda dins d’eixa àrea. La selecció utilitza píxels de llacuna oberta en lloc d’arrossars inundats estacionalment. Els altres índexs satel·litaris terrestres i de cobertura utilitzen l’àrea de la ubicació, i els sensors terrestres proporcionen mesures puntuals."@ca-valencia .
+
+nb:hasInputFeature a rdf:Property ;
+    rdfs:label "Has input feature"@en ,
+               "Tiene característica de entrada"@es ,
+               "Té característica d'entrada"@ca-valencia ;
+    rdfs:comment "Links a KEI or derived index to the environmental properties used as inputs in its calculation."@en ,
+                 "Vincula un KEI o índice derivado con las propiedades ambientales utilizadas como entradas en su cálculo."@es ,
+                 "Vincula un KEI o índex derivat amb les propietats ambientals utilitzades com a entrades en el seu càlcul."@ca-valencia .
+
+# ---------------------------------------------------------
+# Reused concepts and unit vocabularies definitions.
+# ---------------------------------------------------------
+
+unit:DEG
+  a qudt:Unit ;
+  dcterms:description "A degree (in full, a degree of arc, arc degree, or arcdegree), usually denoted by $^\\circ$ (the degree symbol), is a measurement of plane angle, representing 1/360 of a full rotation; one degree is equivalent to  $2\\pi /360 rad$, $0.017453 rad$. It is not an SI unit, as the SI unit for angles is radian, but is an accepted SI unit."^^qudt:LatexString ;
+  qudt:conversionMultiplier 0.01745329251994329576923690768488613 ;
+  qudt:conversionMultiplierSN 1.745329251994329576923690768488613E-2 ;
+  qudt:hasQuantityKind qudt_qk:Angle ;
+  qudt:hasQuantityKind qudt_qk:PlaneAngle ;
+  qudt:omUnit <http://www.ontology-of-units-of-measure.org/resource/om-2/degree> ;
+  qudt:scalingOf unit:RAD ;
+  qudt:symbol "°" ;
+  rdfs:isDefinedBy <http://qudt.org/vocab/unit> ;
+  rdfs:label "Degree"@en ,
+             "Grado"@es ,
+             "Grau"@ca-valencia .
+
+unit:DEG_C
+  a qudt:DerivedUnit, qudt:Unit ;
+  dcterms:description """
+  The unit $\\textit{Celsius}$, also known as centigrade, is a scale and unit of measurement for temperature.
+  It can refer to a specific temperature on the Celsius scale as well as a unit to indicate a temperature interval,
+  a difference between two temperatures or an uncertainty.
+  This definition fixes the magnitude of both the degree Celsius and the kelvin as precisely 1 part
+  in 273.16 (approximately 0.00366) of the difference between absolute zero and the triple point of water.
+  Thus, it sets the magnitude of one degree Celsius and that of one kelvin as exactly the same.
+  Additionally, it establishes the difference between the two scales' null points as being precisely $273.15^{\\circ}\\text{C}$.
+  """^^qudt:LatexString ;
+  qudt:conversionMultiplier 1.0 ;
+  qudt:conversionMultiplierSN 1.0E0 ;
+  qudt:conversionOffset 273.15 ;
+  qudt:conversionOffsetSN 2.7315E2 ;
+  qudt:hasQuantityKind qudt_qk:BoilingPoint ;
+  qudt:hasQuantityKind qudt_qk:FlashPoint ;
+  qudt:hasQuantityKind qudt_qk:MeltingPoint ;
+  qudt:hasQuantityKind qudt_qk:Temperature ;
+  qudt:omUnit <http://www.ontology-of-units-of-measure.org/resource/om-2/degreeCelsius> ;
+  qudt:scalingOf unit:K ;
+  qudt:symbol "°C" ;
+  rdfs:isDefinedBy <http://qudt.org/vocab/unit> ;
+  rdfs:label "Degree Celsius"@en ,
+             "Grado Celsius"@es ,
+             "Grau Celsius"@ca-valencia ;
+  skos:altLabel "degree Celsius"@en , "grado Celsius"@es , "grau Celsius"@ca-valencia .
+
+unit:HectoPA
+  a qudt:DerivedUnit, qudt:Unit ;
+  dcterms:description "Hectopascal is a unit of pressure. 1 Pa is approximately the pressure exerted by a 10-g mass resting on a 1-cm2 area. 1013 hPa = 1 atm. There are 100 pascals in 1 hectopascal."^^rdf:HTML ;
+  qudt:conversionMultiplier 100.0 ;
+  qudt:conversionMultiplierSN 1.0E2 ;
+  qudt:exactMatch unit:MilliBAR ;
+  qudt:hasQuantityKind qudt_qk:ForcePerArea ;
+  qudt:hasQuantityKind qudt_qk:ModulusOfElasticity ;
+  qudt:hasQuantityKind qudt_qk:ShearModulus ;
+  qudt:hasQuantityKind qudt_qk:VapourPressure ;
+  qudt:scalingOf unit:PA ;
+  qudt:symbol "hPa" ;
+  rdfs:comment "Hectopascal is commonly used in meteorology to report values for atmospheric pressure. It is equivalent to millibar."@en ,
+               "El hectopascal se utiliza habitualmente en meteorología para expresar valores de presión atmosférica. Equivale al milibar."@es ,
+               "L'hectopascal s'utilitza habitualment en meteorologia per a expressar valors de pressió atmosfèrica. Equival al mil·libar."@ca-valencia ;
+  rdfs:isDefinedBy <http://qudt.org/vocab/unit> ;
+  rdfs:label "Hectopascal"@en ,
+             "Hectopascal"@es ,
+             "Hectopascal"@ca-valencia .
+
+unit:M
+  a qudt:Unit ;
+  dcterms:description "The metric and SI base unit of distance.  The 17th General Conference on Weights and Measures in 1983 defined the meter as that distance that makes the speed of light in a vacuum equal to exactly 299 792 458 meters per second. The speed of light in a vacuum, $c$, is one of the fundamental constants of nature. The meter is equal to approximately 1.093 613 3 yards, 3.280 840 feet, or 39.370 079 inches."^^qudt:LatexString ;
+  qudt:conversionMultiplier 1.0 ;
+  qudt:conversionMultiplierSN 1.0E0 ;
+  qudt:hasQuantityKind qudt_qk:ElevationRelativeToNAP ;
+  qudt:hasQuantityKind qudt_qk:Length ;
+  qudt:omUnit <http://www.ontology-of-units-of-measure.org/resource/om-2/metre> ;
+  qudt:plainTextDescription "The metric and SI base unit of distance.   The meter is equal to approximately 1.093 613 3 yards, 3.280 840 feet, or 39.370 079 inches." ;
+  qudt:symbol "m" ;
+  rdfs:isDefinedBy <http://qudt.org/vocab/unit> ;
+  rdfs:label "Metre"@en ,
+             "Metro"@es ,
+             "Metre"@ca-valencia .
+
+unit:M-PER-SEC
+  a qudt:DerivedUnit, qudt:Unit ;
+  dcterms:description """Metre per second is an SI derived unit of both speed (scalar) and velocity (vector quantity which specifies both magnitude and a specific direction), defined by distance in metres divided by time in seconds.
+The official SI symbolic abbreviation is mu00b7s-1, or equivalently either m/s."""^^rdf:HTML ;
+  qudt:conversionMultiplier 1.0 ;
+  qudt:conversionMultiplierSN 1.0E0 ;
+  qudt:hasQuantityKind qudt_qk:ElectromagneticWavePhaseSpeed ;
+  qudt:hasQuantityKind qudt_qk:LinearVelocity ;
+  qudt:hasQuantityKind qudt_qk:Speed ;
+  qudt:hasQuantityKind qudt_qk:Velocity ;
+  qudt:symbol "m/s" ;
+  rdfs:isDefinedBy <http://qudt.org/vocab/unit> ;
+  rdfs:label "Metre per Second"@en ,
+             "Metro por Segundo"@es ,
+             "Metre per Segon"@ca-valencia .
+
+unit:M3
+  a qudt:DerivedUnit, qudt:Unit ;
+  dcterms:description "The SI unit of volume, equal to 1.0e6 cm3, 1000 liters, 35.3147 ft3, or 1.30795 yd3. A cubic meter holds about 264.17 U.S. liquid gallons or 219.99 British Imperial gallons."^^rdf:HTML ;
+  qudt:conversionMultiplier 1.0 ;
+  qudt:conversionMultiplierSN 1.0E0 ;
+  qudt:hasQuantityKind qudt_qk:SectionModulus ;
+  qudt:hasQuantityKind qudt_qk:Volume ;
+  qudt:symbol "m³" ;
+  rdfs:isDefinedBy <http://qudt.org/vocab/unit> ;
+  rdfs:label "Cubic Metre"@en ,
+             "Metro Cúbico"@es ,
+             "Metre Cúbic"@ca-valencia .
+
+unit:M3-PER-SEC
+  a qudt:DerivedUnit, qudt:Unit ;
+  dcterms:description "A cubic metre per second ($m^{3}s^{-1}, m^{3}/s$), cumecs or cubic meter per second in American English) is a derived SI unit of flow rate equal to that of a stere or cube with sides of one metre ( u0303 39.37 in) in length exchanged or moving each second. It is popularly used for water flow, especially in rivers and streams, and fractions for HVAC values measuring air flow."^^qudt:LatexString ;
+  qudt:conversionMultiplier 1.0 ;
+  qudt:conversionMultiplierSN 1.0E0 ;
+  qudt:hasQuantityKind qudt_qk:RecombinationCoefficient ;
+  qudt:hasQuantityKind qudt_qk:SoundVolumeVelocity ;
+  qudt:hasQuantityKind qudt_qk:VolumeFlowRate ;
+  qudt:hasQuantityKind qudt_qk:VolumePerTime ;
+  qudt:symbol "m³/s" ;
+  rdfs:isDefinedBy <http://qudt.org/vocab/unit> ;
+  rdfs:label "Cubic Metre per Second"@en ,
+             "Metro Cúbico por Segundo"@es ,
+             "Metre Cúbic per Segon"@ca-valencia .
+
+unit:MicroGM-PER-L
+  a qudt:Unit ;
+  dcterms:description "0.000000001-fold of the SI base unit kilogram divided by the unit litre"^^rdf:HTML ;
+  qudt:conversionMultiplier 0.000001 ;
+  qudt:conversionMultiplierSN 1.0E-6 ;
+  qudt:hasQuantityKind qudt_qk:Density ;
+  qudt:hasQuantityKind qudt_qk:MassConcentration ;
+  qudt:hasQuantityKind qudt_qk:MassDensity ;
+  qudt:plainTextDescription "0.000000001-fold of the SI base unit kilogram divided by the unit litre"@en ,
+                            "0,000000001 veces la unidad base del SI kilogramo dividida por la unidad litro."@es ,
+                            "0,000000001 vegades la unitat base del SI quilogram dividida per la unitat litre."@ca-valencia ;
+  qudt:symbol "μg/L" ;
+  rdfs:isDefinedBy <http://qudt.org/vocab/unit> ;
+  rdfs:label "Microgram per Litre"@en ,
+             "Microgramo por Litro"@es ,
+             "Microgram per Litre"@ca-valencia .
+
+unit:MicroS-PER-CentiM
+  a qudt:Unit ;
+  dcterms:description "0.000001-fold of the SI derived unit Siemens divided by the 0.01-fold of the SI base unit metre"^^rdf:HTML ;
+  qudt:conversionMultiplier 0.0001 ;
+  qudt:conversionMultiplierSN 1.0E-4 ;
+  qudt:hasQuantityKind qudt_qk:ElectricConductivity ;
+  qudt:hasQuantityKind qudt_qk:ElectrolyticConductivity ;
+  qudt:plainTextDescription "Unit of electrical conductivity equal to 0.000001-fold of the SI derived unit siemens divided by 0,01-fold of the SI base unit meter" ;
+  qudt:symbol "μS/cm" ;
+  rdfs:isDefinedBy <http://qudt.org/vocab/unit> ;
+  rdfs:label "Microsiemens per Centimetre"@en ,
+             "Microsiemens por centímetro"@es ,
+             "Microsiemens per centímetre"@ca-valencia .
+
+unit:MilliGM-PER-L
+  a qudt:Unit ;
+  dcterms:description "0.000001-fold of the SI base unit kilogram divided by the unit litre"^^rdf:HTML ;
+  qudt:conversionMultiplier 0.001 ;
+  qudt:conversionMultiplierSN 1.0E-3 ;
+  qudt:hasQuantityKind qudt_qk:Density ;
+  qudt:hasQuantityKind qudt_qk:MassConcentration ;
+  qudt:hasQuantityKind qudt_qk:MassDensity ;
+  qudt:plainTextDescription "0.000001-fold of the SI base unit kilogram divided by the unit litre"@en ,
+                            "0,000001 veces la unidad base del SI kilogramo dividida por la unidad litro."@es ,
+                            "0,000001 vegades la unitat base del SI quilogram dividida per la unitat litre."@ca-valencia ;
+  qudt:symbol "mg/L" ;
+  rdfs:isDefinedBy <http://qudt.org/vocab/unit> ;
+  rdfs:label "Milligram per Litre"@en ,
+             "Miligramo por Litro"@es ,
+             "Mil·ligram per Litre"@ca-valencia .
+
+unit:MilliM
+  a qudt:DerivedUnit, qudt:Unit ;
+  dcterms:description "The millimetre (International spelling as used by the International Bureau of Weights and Measures) or millimeter (American spelling) (SI unit symbol mm) is a unit of length in the metric system, equal to one thousandth of a metre, which is the SI base unit of length. It is equal to 1000 micrometres or 1000000 nanometres. A millimetre is equal to exactly 5/127 (approximately 0.039370) of an inch."^^rdf:HTML ;
+  qudt:conversionMultiplier 0.001 ;
+  qudt:conversionMultiplierSN 1.0E-3 ;
+  qudt:hasQuantityKind qudt_qk:Length ;
+  qudt:scalingOf unit:M ;
+  qudt:symbol "mm" ;
+  rdfs:isDefinedBy <http://qudt.org/vocab/unit> ;
+  rdfs:label "Millimetre"@en ,
+             "Milímetro"@es ,
+             "Mil·límetre"@ca-valencia .
+
+unit:NTU
+  a qudt:Unit ;
+  dcterms:description "\"Nephelometry Turbidity Unit\" is a C.G.S System unit for  'Turbidity' expressed as $NTU$."^^qudt:LatexString ;
+  qudt:conversionMultiplier 0.0 ;
+  qudt:conversionMultiplierSN 0.0E0 ;
+  qudt:hasQuantityKind qudt_qk:Turbidity ;
+  qudt:symbol "NTU" ;
+  rdfs:isDefinedBy <http://qudt.org/vocab/unit> ;
+  rdfs:label "Nephelometry Turbidity Unit"@en ,
+             "Unidad de Turbidez Nefelométrica"@es ,
+             "Unitat de Terbolesa Nefelomètrica"@ca-valencia .
+
+unit:PERCENT
+  a qudt:Unit ;
+  dcterms:description "\"Percent\" is a unit for  'Dimensionless Ratio' expressed as $\\%$."^^qudt:LatexString ;
+  qudt:conversionMultiplier 0.01 ;
+  qudt:conversionMultiplierSN 1.0E-2 ;
+  qudt:hasQuantityKind qudt_qk:DimensionlessRatio ;
+  qudt:hasQuantityKind qudt_qk:LengthRatio ;
+  qudt:hasQuantityKind qudt_qk:LuminousFluxRatio ;
+  qudt:hasQuantityKind qudt_qk:OpeningRatio ;
+  qudt:hasQuantityKind qudt_qk:PressureRatio ;
+  qudt:hasQuantityKind qudt_qk:Prevalence ;
+  qudt:hasQuantityKind qudt_qk:Reflectance ;
+  qudt:hasQuantityKind qudt_qk:RelativeHumidity ;
+  qudt:hasQuantityKind qudt_qk:RelativePartialPressure ;
+  qudt:omUnit <http://www.ontology-of-units-of-measure.org/resource/om-2/percent> ;
+  qudt:symbol "%" ;
+  rdfs:isDefinedBy <http://qudt.org/vocab/unit> ;
+  rdfs:label "Percent"@en ,
+             "Porcentaje"@es ,
+             "Percentatge"@ca-valencia .
+
+unit:PH
+  a qudt:Unit ;
+  dcterms:description """
+  In chemistry the unit $\\textit{pH}$, also referred to as $\\textit{acidity}$ or $\\textit{basicity}$,
+   is the negative logarithm (base 10) of the concentration of free protons (or hydronium ions).
+  """^^qudt:LatexString ;
+  qudt:conversionMultiplier 0.0 ;
+  qudt:conversionMultiplierSN 0.0E0 ;
+  qudt:hasQuantityKind qudt_qk:Acidity ;
+  qudt:hasQuantityKind qudt_qk:Basicity ;
+  qudt:symbol "pH" ;
+  rdfs:comment "Unsure about dimensionality of pH; conversion requires a log function not just a multiplier"@en ,
+               "Dimensionalidad del pH incierta; la conversión requiere una función logarítmica y no solo un multiplicador"@es ,
+               "Dimensionalitat del pH incerta; la conversió requerix una funció logarítmica i no només un multiplicador"@ca-valencia ;
+  rdfs:isDefinedBy <http://qudt.org/vocab/unit> ;
+  rdfs:label "pH"@en ,
+             "pH"@es ,
+             "pH"@ca-valencia .
+
+unit:UNITLESS
+  a qudt:CountingUnit, qudt:DimensionlessUnit, qudt:Unit ;
+  dcterms:description "An explicit unit to say something has no units."^^rdf:HTML ;
+  qudt:conversionMultiplier 1.0 ;
+  qudt:conversionMultiplierSN 1.0E0 ;
+  qudt:hasQuantityKind qudt_qk:Dimensionless ;
+  qudt:hasQuantityKind qudt_qk:DimensionlessRatio ;
+  qudt:symbol "一" ;
+  rdfs:isDefinedBy <http://qudt.org/vocab/unit> ;
+  rdfs:label "Unitless"@en ,
+             "Sin unidad"@es ,
+             "Sense unitat"@ca-valencia .
+
+unit:W-PER-M2
+  a qudt:DerivedUnit, qudt:Unit ;
+  dcterms:description "\"Watt per Square Meter is a unit of irradiance defined as the power received per area. This is a unit in the category of Energy flux. It is also known as watts per square meter, watt per square metre, watts per square metre, watt/square meter, watt/square metre. This unit is commonly used in the SI unit system. Watt Per Square Meter ($W/m^2$) has a dimension of $MT^{-3\"$ where $M$ is mass, and $T$ is time. This unit is the standard SI unit in this category."^^qudt:LatexString ;
+  qudt:conversionMultiplier 1.0 ;
+  qudt:conversionMultiplierSN 1.0E0 ;
+  qudt:hasQuantityKind qudt_qk:PowerPerArea ;
+  qudt:hasQuantityKind qudt_qk:PoyntingVector ;
+  qudt:symbol "W/m²" ;
+  rdfs:isDefinedBy <http://qudt.org/vocab/unit> ;
+  rdfs:label "Watt per Square Metre"@en ,
+             "Vatio por Metro Cuadrado"@es ,
+             "Vat per Metre Quadrat"@ca-valencia .
+
+unit:NUM
+  a qudt:CountingUnit, qudt:Unit ;
+  dcterms:description "\"Number\" is a unit for  'Dimensionless' expressed as (\\#$."^^rdf:HTML ;
+  qudt:conversionMultiplier 1.0 ;
+  qudt:conversionMultiplierSN 1.0E0 ;
+  qudt:exactMatch unit:COUNT ;
+  qudt:hasQuantityKind qudt_qk:Count ;
+  qudt:hasQuantityKind qudt_qk:Dimensionless ;
+  qudt:hasQuantityKind qudt_qk:DimensionlessRatio ;
+  qudt:symbol "#" ;
+  rdfs:isDefinedBy <http://qudt.org/vocab/unit> ;
+  rdfs:label "Number"@en ,
+             "Número"@es ,
+             "Número"@ca-valencia .
+
+unit:HR
+  a qudt:Unit ;
+  dcterms:description "An hour is a unit of time conventionally reckoned as 1/24 of a day, or 3600 seconds."^^rdf:HTML ;
+  qudt:conversionMultiplier 3600.0 ;
+  qudt:conversionMultiplierSN 3.6E3 ;
+  qudt:hasQuantityKind qudt_qk:Time ;
+  qudt:symbol "h" ;
+  rdfs:isDefinedBy <http://qudt.org/vocab/unit> ;
+  rdfs:label "Hour"@en ,
+             "Hora"@es ,
+             "Hora"@ca-valencia .
+
+qudt_qk:Acidity
+  a qudt:QuantityKind ;
+  dcterms:description """
+  Chemicals or substances having a pH less than 7 are said to be acidic;
+   lower pH means higher acidity.
+  """^^qudt:LatexString ;
+  qudt:applicableUnit unit:PH ;
+  qudt:informativeReference "https://en.wikipedia.org/wiki/Acid"^^xsd:anyURI ;
+  qudt:informativeReference "https://en.wikipedia.org/wiki/PH"^^xsd:anyURI ;
+  qudt:informativeReference "https://iupac.org/wp-content/uploads/2019/05/IUPAC-GB3-2012-2ndPrinting-PDFsearchable.pdf"^^xsd:anyURI ;
+  qudt:plainTextDescription "Chemicals or substances having a pH less than 7 are said to be acidic; lower pH means higher acidity."@en ,
+                            "Se dice que los productos químicos o sustancias con un pH inferior a 7 son ácidos; un pH más bajo significa una acidez más alta."@es ,
+                            "Es diu que els productes químics o substàncies amb un pH inferior a 7 són àcids; un pH més baix significa una acidesa més alta."@ca-valencia ;
+  rdfs:comment "Applicable units are those of qudt_qk:Acidity"@en ,
+               "Las unidades aplicables son las de qudt_qk:Acidity."@es ,
+               "Les unitats aplicables són les de qudt_qk:Acidity."@ca-valencia ;
+  rdfs:isDefinedBy <http://qudt.org/vocab/quantitykind> ;
+  rdfs:label "pH"@en ,
+             "pH"@es ,
+             "pH"@ca-valencia ;
+  rdfs:seeAlso qudt_qk:Basicity .
+
+
+###  https://saref.etsi.org/saref4mari/Salinity
+s4mari:Salinity rdf:type owl:NamedIndividual ,
+                         s4mari:MeteoOceanoConditionProperty ;
+                qudt:applicableUnit unit:MilliGM-PER-L ;
+                rdfs:label "Salinity"@en ,
+                           "Salinidad"@es ,
+                           "Salinitat"@ca-valencia ;
+                rdfs:seeAlso "https://emsa.europa.eu/cise-documentation/cise-data-model-1.5.3/model/info/MeteoOceanographicCondition_Salinity.html" .
+
+###  https://saref.etsi.org/saref4mari/WaterConductivity
+s4mari:WaterConductivity rdf:type owl:NamedIndividual ,
+                                  s4mari:MeteoOceanoConditionProperty ;
+                         rdfs:comment "The conductivity of water."@en ,
+                                      "La conductividad del agua."@es ,
+                                      "La conductivitat de l'aigua."@ca-valencia ;
+                         qudt:applicableUnit unit:MicroS-PER-CentiM ;
+                         rdfs:isDefinedBy "https://saref.etsi.org/saref4mari/WaterConductivity" ;
+                         rdfs:label "Electrical conductivity"@en ,
+                                    "Conductividad eléctrica"@es ,
+                                    "Conductivitat elèctrica"@ca-valencia .
+
+###  https://saref.etsi.org/saref4mari/WaterTemperature
+s4mari:WaterTemperature rdf:type owl:NamedIndividual ,
+                                 s4mari:MeteoOceanoConditionProperty ;
+                        qudt:applicableUnit unit:DEG_C ;
+                        rdfs:comment "The temperature of water."@en ,
+                                     "La temperatura del agua."@es ,
+                                     "La temperatura de l'aigua."@ca-valencia ;
+                        rdfs:isDefinedBy "https://saref.etsi.org/saref4mari/WaterTemperature" ;
+                        rdfs:label "Water temperature"@en ,
+                                   "Temperatura del agua"@es ,
+                                   "Temperatura de l’aigua"@ca-valencia ;
+                        rdfs:seeAlso "https://emsa.europa.eu/cise-documentation/cise-data-model-1.5.3/model/info/MeteoOceanographicCondition_WaveDirection.html" .
+
+###  https://saref.etsi.org/saref4watr/AtmosphericPressure
+s4watr:AtmosphericPressure rdf:type owl:NamedIndividual ,
+                                    s4watr:EnvironmentalProperty ;
+                          qudt:applicableUnit unit:HectoPA ;
+                           rdfs:comment "Property of the environment indicating the atmospheric pressure."@en ,
+                                        "Propiedad del entorno que indica la presión atmosférica."@es ,
+                                        "Propietat de l'entorn que indica la pressió atmosfèrica."@ca-valencia ;
+                           rdfs:label "Atmospheric pressure"@en ,
+                                      "Presión atmosférica"@es ,
+                                      "Pressió atmosfèrica"@ca-valencia .
+
+###  https://saref.etsi.org/saref4watr/ExternalTemperature
+s4watr:ExternalTemperature rdf:type owl:NamedIndividual ,
+                                    s4watr:EnvironmentalProperty ;
+                           qudt:applicableUnit unit:DEG_C ;
+                           rdfs:comment "Property of the environment indicating the temperature."@en ,
+                                        "Propiedad del entorno que indica la temperatura."@es ,
+                                        "Propietat de l'entorn que indica la temperatura."@ca-valencia ;
+                           rdfs:label "External temperature"@en ,
+                                      "Temperatura externa"@es ,
+                                      "Temperatura externa"@ca-valencia .
+
+###  https://saref.etsi.org/saref4watr/FlowRate
+s4watr:FlowRate rdf:type owl:NamedIndividual ,
+                         s4watr:WaterFlowProperty ;
+                qudt:applicableUnit unit:M3-PER-SEC ;
+                rdfs:comment "Property indicating the rate of a water flow."@en ,
+                             "Propiedad que indica el caudal de un flujo de agua."@es ,
+                             "Propietat que indica el cabal d'un flux d'aigua."@ca-valencia ;
+            	rdfs:label "Flow rate"@en ,
+                           "Caudal"@es ,
+                           "Cabal"@ca-valencia .
+
+###  https://saref.etsi.org/saref4watr/FlowVolume
+s4watr:FlowVolume rdf:type owl:NamedIndividual ,
+                       s4watr:WaterFlowProperty ;
+                  qudt:applicableUnit unit:M3 ;
+                  rdfs:comment "Property indicating the volume of a water flow."@en ,
+                               "Propiedad que indica el volumen de un flujo de agua."@es ,
+                               "Propietat que indica el volum d'un flux d'aigua."@ca-valencia ;
+                  rdfs:label "Flow volume"@en ,
+                             "Volumen de agua"@es ,
+                             "Volum d'aigua"@ca-valencia .
+
+###  https://saref.etsi.org/saref4watr/Humidity
+s4watr:Humidity rdf:type owl:NamedIndividual ,
+                         s4watr:EnvironmentalProperty ;
+                qudt:applicableUnit unit:PERCENT ;
+                rdfs:comment "Property of the environment indicating the humidity."@en ,
+                             "Propiedad del entorno que indica la humedad."@es ,
+                             "Propietat de l'entorn que indica la humitat."@ca-valencia ;
+                rdfs:label "Humidity"@en ,
+                           "Humedad"@es ,
+                           "Humitat"@ca-valencia .
+
+###  https://saref.etsi.org/saref4watr/Oxygen
+s4watr:Oxygen rdf:type owl:NamedIndividual ,
+                       s4watr:ChemicalProperty ;
+              qudt:applicableUnit unit:MilliGM-PER-L ;
+              rdfs:comment "Property of the water indicating its oxygen saturation."@en ,
+                           "Propiedad del agua que indica su saturación de oxígeno."@es ,
+                           "Propietat de l'aigua que indica la seua saturació d'oxigen."@ca-valencia ;
+              rdfs:label "Dissolved oxygen"@en ,
+                         "Oxígeno disuelto"@es ,
+                         "Oxigen dissolt"@ca-valencia ;
+              owl:deprecated true ;
+              dcterms:isReplacedBy bufr4_b13:083 ;
+              dcterms:modified "2026-10-13"^^xsd:date ;
+              skos:historyNote "Deprecated in OBEREK on 2026-10-13."@en ,
+                               "Obsoleto en OBEREK desde el 2026-10-13."@es ,
+                               "Obsolet en OBEREK des del 2026-10-13."@ca-valencia .
+
+###  https://saref.etsi.org/saref4watr/Precipitation
+s4watr:Precipitation rdf:type owl:NamedIndividual ,
+                              s4watr:EnvironmentalProperty ;
+                     qudt:applicableUnit unit:MilliM ;
+                     rdfs:comment "Property of the environment indicating the precipitation."@en ,
+                                  "Propiedad del entorno que indica la precipitación."@es ,
+                                  "Propietat de l'entorn que indica la precipitació."@ca-valencia ;
+                     rdfs:label "Precipitation"@en ,
+                                "Precipitación"@es ,
+                                "Precipitació"@ca-valencia .
+
+###  https://saref.etsi.org/saref4watr/TotalDissolvedSolids
+s4watr:TotalDissolvedSolids rdf:type owl:NamedIndividual ,
+                                     s4watr:AcceptabilityProperty ;
+                            qudt:applicableUnit unit:MilliGM-PER-L ;
+                            rdfs:comment "Property of the water indicating the dissolved combined content of all inorganic and organic substances present in a sample of water."@en ,
+                                         "Propiedad del agua que indica el contenido disuelto combinado de todas las sustancias inorgánicas y orgánicas presentes en una muestra de agua."@es ,
+                                         "Propietat de l'aigua que indica el contingut dissolt combinat de totes les substàncies inorgàniques i orgàniques presents en una mostra d'aigua."@ca-valencia ;
+                            rdfs:label "Total dissolved solids"@en ,
+                                       "Sólidos disueltos totales"@es ,
+                                       "Sòlids dissolts totals"@ca-valencia .
+
+###  https://saref.etsi.org/saref4watr/Turbidity
+s4watr:Turbidity rdf:type owl:NamedIndividual ,
+                          s4watr:AcceptabilityProperty ;
+    qudt:applicableUnit unit:NTU ;
+                 rdfs:comment "Property of the water indicating its turbidity."@en ,
+                              "Propiedad del agua que indica su turbidez."@es ,
+                              "Propietat de l'aigua que indica la seua terbolesa."@ca-valencia ;
+                 rdfs:label "Turbidity"@en ,
+                            "Turbidez"@es ,
+                            "Terbolesa"@ca-valencia .
+
+wmdr_terr:12252 a skos:Concept ;
+    qudt:applicableUnit unit:M ;
+        rdfs:label       "Water level"@en ,
+                         "Nivel del agua"@es ,
+                         "Nivell de l'aigua"@ca-valencia ;
+        dcterms:description  "Elevation of the free water surface of a water body relative to a reference datum (synonym: stage, gage height). [Based on 'water level' in International Glossary of Hydrology (WMO-No. 385). 2012 edition.]"@en ,
+                             "Elevación de la superficie libre del agua de una masa de agua respecto a un datum de referencia (sinónimos: nivel hidrométrico, altura de escala). [Basado en «water level» del International Glossary of Hydrology (WMO-No. 385), edición de 2012.]"@es ,
+                             "Elevació de la superfície lliure de l'aigua d'una massa d'aigua respecte a un datum de referència (sinònims: nivell hidromètric, altura d'escala). [Basat en «water level» de l'International Glossary of Hydrology (WMO-No. 385), edició de 2012.]"@ca-valencia ;
+        skos:notation    "12252" .
+
+wmdr:12312 a skos:Concept ;
+    qudt:applicableUnit unit:W-PER-M2 ;
+        rdfs:label       "Solar total irradiance"@en ,
+                         "Irradiancia solar total"@es ,
+                         "Irradiància solar total"@ca-valencia ;
+        dcterms:description  "Spectrally integrated flux density of radiation received from the sun at the top of the atmosphere. Also called 'Total solar irradiance (TSI)'."@en ;
+        skos:notation    "12312" ;
+        owl:deprecated   true ;
+        dcterms:isReplacedBy wmdr:573 ;
+        dcterms:modified "2026-10-13"^^xsd:date ;
+        skos:historyNote "Deprecated in OBEREK on 2026-10-13: the station measures surface radiation, not top-of-atmosphere irradiance."@en ,
+                         "Obsoleto en OBEREK desde el 2026-10-13: la estación mide la radiación en superficie, no la irradiancia en el límite de la atmósfera."@es ,
+                         "Obsolet en OBEREK des del 2026-10-13: l'estació mesura la radiació en superfície, no la irradiància al límit de l'atmosfera."@ca-valencia .
+
+wmdr:573 a skos:Concept ;
+    qudt:applicableUnit unit:W-PER-M2 ;
+        rdfs:label       "Downward short-wave irradiance"@en ,
+                         "Irradiancia de onda corta descendente"@es ,
+                         "Irradiància d'ona curta descendent"@ca-valencia ;
+        dcterms:description  "Flux density of downwelling short-wave solar radiation, at the top of the atmosphere or a specified level within the atmosphere, including the Earth surface. [The term 'global (downward) shortwave irradiance' is sometimes used to specify that this flux is the sum of direct and diffuse components.]"@en ;
+        rdfs:comment "Global solar radiation at the surface."@en ,
+                     "Radiación solar global en superficie."@es ,
+                     "Radiació solar global en superfície."@ca-valencia ;
+        skos:notation    "573" ;
+        dcterms:replaces wmdr:12312 .
+
+grib2:2-0-6  a skos:Concept , <http://codes.wmo.int/def/grib2/Parameter> ;
+    qudt:applicableUnit unit:MilliM ;
+        rdfs:label       "Evapotranspiration"@en ,
+                         "Evapotranspiración"@es ,
+                         "Evapotranspiració"@ca-valencia ;
+        <http://codes.wmo.int/def/common/edition>
+                <http://codes.wmo.int/codeform/grib2> ;
+        <http://codes.wmo.int/def/common/unit>
+                <http://codes.wmo.int/common/unit/kg-2_s-1> ;
+        <http://codes.wmo.int/def/grib2/category>
+                <http://codes.wmo.int/grib2/codeflag/4.1/2-0> ;
+        <http://codes.wmo.int/def/grib2/discipline>
+                <http://codes.wmo.int/grib2/codeflag/0.0/2> ;
+        <http://codes.wmo.int/def/grib2/parameter>
+                6 ;
+        <http://metarelate.net/vocabulary/index.html#identifier>
+                <http://codes.wmo.int/def/common/edition> , <http://codes.wmo.int/def/grib2/category> , <http://codes.wmo.int/def/grib2/parameter> , <http://codes.wmo.int/def/grib2/discipline> ;
+        dcterms:description  "Evapotranspiration"@en ;
+        rdfs:label   "Evapotranspiration"@en ,
+                         "Evapotranspiración"@es ,
+                         "Evapotranspiració"@ca-valencia ;
+        owl:deprecated   true ;
+        dcterms:isReplacedBy bufr4_b13:031 ;
+        dcterms:modified "2026-10-13"^^xsd:date ;
+        skos:historyNote "Deprecated in OBEREK on 2026-10-13: the station reports a daily ETo amount in mm, not a rate."@en ,
+                         "Obsoleto en OBEREK desde el 2026-10-13: la estación da una cantidad diaria de ETo en mm, no una tasa."@es ,
+                         "Obsolet en OBEREK des del 2026-10-13: l'estació dona una quantitat diària d'ETo en mm, no una taxa."@ca-valencia .
+
+bufr4_b13:031 a skos:Concept ;
+    qudt:applicableUnit unit:MilliM ;
+        rdfs:label       "Evapotranspiration"@en ,
+                         "Evapotranspiración"@es ,
+                         "Evapotranspiració"@ca-valencia ;
+        <http://codes.wmo.int/def/bufr4/dataWidth_Bits>
+                7 ;
+        <http://codes.wmo.int/def/bufr4/fxy>
+                "013031" ;
+        <http://codes.wmo.int/def/bufr4/referenceValue>
+                0 ;
+        <http://codes.wmo.int/def/bufr4/scale>
+                0 ;
+        <http://codes.wmo.int/def/common/unit>
+                <http://codes.wmo.int/common/unit/kg_m-2> ;
+        rdfs:comment "Reference evapotranspiration (ETo) since 00:00."@en ,
+                     "Evapotranspiración de referencia (ETo) desde las 00:00."@es ,
+                     "Evapotranspiració de referència (ETo) des de les 00:00."@ca-valencia ;
+        skos:notation    "031" ;
+        dcterms:replaces grib2:2-0-6 .
+
+bufr4_b13:083 a skos:Concept ;
+    qudt:applicableUnit unit:MilliGM-PER-L ;
+        rdfs:label       "Dissolved oxygen"@en ,
+                         "Oxígeno disuelto"@es ,
+                         "Oxigen dissolt"@ca-valencia ;
+        <http://codes.wmo.int/def/bufr4/dataWidth_Bits>
+                15 ;
+        <http://codes.wmo.int/def/bufr4/fxy>
+                "013083" ;
+        <http://codes.wmo.int/def/bufr4/referenceValue>
+                0 ;
+        <http://codes.wmo.int/def/bufr4/scale>
+                6 ;
+        <http://codes.wmo.int/def/common/unit>
+                <http://codes.wmo.int/common/unit/kg_m-3> ;
+        rdfs:comment "Concentration of oxygen dissolved in the water, in mg/L."@en ,
+                     "Concentración de oxígeno disuelto en el agua, en mg/L."@es ,
+                     "Concentració d'oxigen dissolt en l'aigua, en mg/L."@ca-valencia ;
+        skos:notation    "083" ;
+        dcterms:replaces s4watr:Oxygen .
+
+wmo:windDirection a qudt:SpaceAndTimeQuantityKind , qudt:QuantityKind , skos:Concept ;
+        qudt:applicableUnit unit:DEG ;
+        rdfs:label       "Wind direction"@en ,
+                         "Dirección del viento"@es ,
+                         "Direcció del vent"@ca-valencia ;
+        <http://codes.wmo.int/def/common/dimensions>
+                "dimensionless" ;
+        <http://codes.wmo.int/def/common/discipline>
+                "Meteorological quantity kinds" ;
+        dcterms:description  "Direction from which wind is blowing."@en ,
+                             "Dirección desde la que sopla el viento."@es ,
+                             "Direcció des de la qual bufa el vent."@ca-valencia ;
+        skos:notation    "windDirection" .
+
+wmo:windSpeed a qudt:SpaceAndTimeQuantityKind , qudt:QuantityKind , skos:Concept ;
+        qudt:applicableUnit unit:M-PER-SEC ;
+        rdfs:label       "Wind speed"@en ,
+                         "Velocidad del viento"@es ,
+                         "Velocitat del vent"@ca-valencia ;
+        <http://codes.wmo.int/def/common/dimensions>
+                "LT-1" ;
+        <http://codes.wmo.int/def/common/discipline>
+                "Meteorological quantity kinds" ;
+        dcterms:description  "Ratio of the distance covered by the air to the time taken to cover it. The instantaneous speed corresponds to the case of an infinitely small time interval. The mean speed corresponds to the case of a finite time interval. It is one component of wind velocity, the other being wind direction)."@en ,
+                             "Relación entre la distancia recorrida por el aire y el tiempo empleado en recorrerla. La velocidad instantánea corresponde al caso de un intervalo de tiempo infinitamente pequeño. La velocidad media corresponde al caso de un intervalo de tiempo finito. Es uno de los componentes de la velocidad del viento; el otro es la dirección del viento."@es ,
+                             "Relació entre la distància recorreguda per l'aire i el temps emprat a recórrer-la. La velocitat instantània correspon al cas d'un interval de temps infinitament xicotet. La velocitat mitjana correspon al cas d'un interval de temps finit. És un dels components de la velocitat del vent; l'altre és la direcció del vent."@ca-valencia ;
+        skos:notation    "windSpeed" .
+
+sst:66851a3 a skos:Concept ;
+  skos:inScheme <http://rdf-vocabulary.ddialliance.org/cv/SummaryStatisticType/2.1.2/> ;
+  dcterms:replaces sst:median ;
+  skos:notation "Median"@en ;
+  rdfs:label "Median"@en ,
+                 "Mediana"@es ,
+                 "Mediana"@ca-valencia ;
+  skos:definition "The middle value of an ordered set of values. For an even number of values, it is the arithmetic mean of the two middle values."@en , "El valor central de un conjunto de valores ordenados. Si el número de valores es par, es la media aritmética de los dos valores centrales."@es , "El valor central d’un conjunt de valors ordenats. Si el nombre de valors és parell, és la mitjana aritmètica dels dos valors centrals."@ca-valencia .
+
+sst:7975ed0 a skos:Concept ;
+  skos:inScheme <http://rdf-vocabulary.ddialliance.org/cv/SummaryStatisticType/2.1.2/> ;
+  skos:notation "ArithmeticMean"@en ;
+  rdfs:label "Arithmetic Mean"@en ,
+                 "Media aritmética"@es ,
+                 "Mitjana aritmètica"@ca-valencia ;
+  skos:definition "Mathematical average of a set of values, calculated by adding the values together and dividing by their count."@en ,
+                "Promedio matemático de un conjunto de valores, calculado sumando los valores y dividiéndolos por su número."@es ,
+                "Mitjana matemàtica d'un conjunt de valors, calculada sumant els valors i dividint-los pel seu nombre."@ca-valencia .
+
+sst:a7f7339 a skos:Concept ;
+  skos:inScheme <http://rdf-vocabulary.ddialliance.org/cv/SummaryStatisticType/2.1.2/> ;
+  skos:notation "InterquartileRange"@en ;
+  rdfs:label "Interquartile range"@en ,
+             "Rango intercuartílico"@es ,
+             "Rang interquartílic"@ca-valencia ;
+  skos:definition "The range between the first and third quartile values."@en ,
+                  "El intervalo entre el primer y el tercer cuartil."@es ,
+                  "L'interval entre el primer i el tercer quartil."@ca-valencia ;
+  dcterms:replaces nb:iqr .
+
+sst:5dc5781 a skos:Concept ;
+  skos:inScheme <http://rdf-vocabulary.ddialliance.org/cv/SummaryStatisticType/2.1.2/> ;
+  skos:notation "MedianAbsoluteDeviation"@en ;
+  rdfs:label "Median absolute deviation"@en ,
+             "Desviación absoluta mediana"@es ,
+             "Desviació absoluta mediana"@ca-valencia ;
+  skos:definition "The median absolute deviation from the median. Measure of statistical dispersion around the median."@en ,
+                  "La mediana de las desviaciones absolutas respecto a la mediana. Medida de la dispersión estadística en torno a la mediana."@es ,
+                  "La mediana de les desviacions absolutes respecte a la mediana. Mesura de la dispersió estadística al voltant de la mediana."@ca-valencia ;
+  dcterms:replaces nb:mad_median .
+
+# Not a DDI concept: this IRI was minted in the DDI namespace by mistake.
+sst:median a skos:Concept ;
+  rdfs:label "Median"@en ,
+             "Mediana"@es ,
+             "Mediana"@ca-valencia ;
+  owl:deprecated true ;
+  dcterms:isReplacedBy sst:66851a3 ;
+  dcterms:modified "2026-10-13"^^xsd:date ;
+  skos:historyNote "Not a DDI term; minted by mistake. Deprecated on 2026-10-13."@en ,
+                   "No es un término DDI; creado por error. Obsoleto desde el 2026-10-13."@es ,
+                   "No és un terme DDI; creat per error. Obsolet des del 2026-10-13."@ca-valencia .

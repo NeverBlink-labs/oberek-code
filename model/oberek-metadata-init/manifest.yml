@@ -1,0 +1,5 @@
+type: rdf
+source:
+  type: file
+  name: oberek_metadata.ttl
+  format: ttl

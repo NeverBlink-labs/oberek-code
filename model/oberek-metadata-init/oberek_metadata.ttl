@@ -1,0 +1,1041 @@
+@prefix nbi: <https://neverblink.eu/oberek/> .
+@prefix saref: <https://saref.etsi.org/core/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix cc: <http://creativecommons.org/ns#> .
+@prefix s4mari: <https://saref.etsi.org/saref4mari/> .
+@prefix s4watr: <https://saref.etsi.org/saref4watr/> .
+@prefix qudt_qk: <http://qudt.org/vocab/quantitykind/> .
+@prefix nb: <https://neverblink.eu/ontologies/oberek/> .
+@prefix wmdr_terr: <http://codes.wmo.int/wmdr/ObservedVariableTerrestrial/> .
+@prefix wmo: <http://codes.wmo.int/common/quantity-kind/> .
+@prefix bufr4_b13: <http://codes.wmo.int/bufr4/b/13/> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix wmdr: <http://codes.wmo.int/wmdr/ObservedVariableAtmosphere/> .
+
+# attribution
+# Who published each source's data and under which licence. Each data-source
+# device below points here with dcterms:publisher and dcterms:license, and names
+# what to credit with cc:attributionName (or nb:attributionText where the licence
+# fixes the wording).
+
+nbi:Publisher-OBEREK a dcterms:Agent ;
+    rdfs:label "OBEREK"@en , "OBEREK"@es , "OBEREK"@ca-valencia .
+
+nbi:Publisher-UPV a dcterms:Agent ;
+    rdfs:label "OBEREK / Universitat Politècnica de València (UPV)"@en ,
+               "OBEREK / Universitat Politècnica de València (UPV)"@es ,
+               "OBEREK / Universitat Politècnica de València (UPV)"@ca-valencia .
+
+nbi:Publisher-FundacioAssut a dcterms:Agent ;
+    rdfs:label "Fundació Assut"@en , "Fundació Assut"@es , "Fundació Assut"@ca-valencia .
+
+nbi:Publisher-CHJ a dcterms:Agent ;
+    rdfs:label "Confederación Hidrográfica del Júcar (CHJ)"@en ,
+               "Confederación Hidrográfica del Júcar (CHJ)"@es ,
+               "Confederación Hidrográfica del Júcar (CHJ)"@ca-valencia .
+
+nbi:Publisher-Copernicus a dcterms:Agent ;
+    rdfs:label "European Union, Copernicus programme (ESA)"@en ,
+               "Unión Europea, programa Copernicus (ESA)"@es ,
+               "Unió Europea, programa Copernicus (ESA)"@ca-valencia .
+
+<https://creativecommons.org/licenses/by/4.0/> a dcterms:LicenseDocument ;
+    rdfs:label "CC BY 4.0"@en , "CC BY 4.0"@es , "CC BY 4.0"@ca-valencia .
+
+<https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice> a dcterms:LicenseDocument ;
+    rdfs:label "Legal notice on the use of Copernicus Sentinel Data and Service Information"@en ,
+               "Aviso legal sobre el uso de los datos Copernicus Sentinel y la información de los servicios"@es ,
+               "Avís legal sobre l'ús de les dades Copernicus Sentinel i la informació dels serveis"@ca-valencia .
+
+<https://www.chj.es/es-es/ciudadano/Reutilizacion/Paginas/Condicionesdeuso.aspx> a dcterms:LicenseDocument ;
+    rdfs:label "CHJ conditions of use"@en ,
+               "Condiciones de uso de la CHJ"@es ,
+               "Condicions d'ús de la CHJ"@ca-valencia .
+
+# IoT sensors
+
+# north station
+nbi:Estacion_North a saref:Device ;
+    rdfs:label "IoT Station North"@en ,
+               "Estación IoT Norte"@es ,
+               "Estació IoT Nord"@ca-valencia ;
+    saref:hasIdentifier "Estacion_North" ;
+    dcterms:publisher nbi:Publisher-UPV ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    cc:attributionName "OBEREK / UPV" ;
+    rdfs:comment "IoT Sensor site deployed to measure aquatic parameters."@en ,
+                 "Emplazamiento de sensores IoT desplegado para medir parámetros acuáticos."@es ,
+                 "Emplaçament de sensors IoT desplegat per a mesurar paràmetres aquàtics."@ca-valencia ;
+    saref:consistsOf nbi:Estacion_North-turbidity,
+                     nbi:Estacion_North-ec,
+                     nbi:Estacion_North-ph,
+                     nbi:Estacion_North-oxygen .
+
+nbi:Estacion_North-turbidity a saref:Sensor ;
+    rdfs:label "Turbidity sensor"@en ,
+               "Sensor de turbidez"@es ,
+               "Sensor de terbolesa"@ca-valencia ;
+    saref:observes s4watr:Turbidity, s4mari:WaterTemperature, nbi:Location-North .
+
+nbi:Estacion_North-ec a saref:Sensor ;
+    rdfs:label "Electrical conductivity sensor"@en ,
+               "Sensor de conductividad eléctrica"@es ,
+               "Sensor de conductivitat elèctrica"@ca-valencia ;
+    saref:observes s4mari:WaterConductivity, s4watr:TotalDissolvedSolids, s4mari:Salinity, s4mari:WaterTemperature, nbi:Location-North .
+
+nbi:Estacion_North-ph a saref:Sensor ;
+    rdfs:label "pH sensor"@en ,
+               "Sensor de pH"@es ,
+               "Sensor de pH"@ca-valencia ;
+    saref:observes qudt_qk:Acidity, s4mari:WaterTemperature, nbi:Location-North .
+
+nbi:Estacion_North-oxygen a saref:Sensor ;
+    rdfs:label "Dissolved oxygen sensor"@en ,
+               "Sensor de oxígeno disuelto"@es ,
+               "Sensor d'oxigen dissolt"@ca-valencia ;
+    saref:observes bufr4_b13:083, s4mari:WaterTemperature, nbi:Location-North .
+
+# south station
+nbi:Estacion_South a saref:Device ;
+    rdfs:label "IoT Station South"@en ,
+               "Estación IoT Sur"@es ,
+               "Estació IoT Sud"@ca-valencia ;
+    saref:hasIdentifier "Estacion_South" ;
+    dcterms:publisher nbi:Publisher-UPV ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    cc:attributionName "OBEREK / UPV" ;
+    rdfs:comment "IoT Sensor site deployed to measure aquatic parameters."@en ,
+                 "Emplazamiento de sensores IoT desplegado para medir parámetros acuáticos."@es ,
+                 "Emplaçament de sensors IoT desplegat per a mesurar paràmetres aquàtics."@ca-valencia ;
+    saref:consistsOf nbi:Estacion_South-turbidity,
+                     nbi:Estacion_South-ec,
+                     nbi:Estacion_South-ph,
+                     nbi:Estacion_South-oxygen .
+
+nbi:Estacion_South-turbidity a saref:Sensor ;
+    rdfs:label "Turbidity sensor"@en ,
+               "Sensor de turbidez"@es ,
+               "Sensor de terbolesa"@ca-valencia ;
+    saref:observes s4watr:Turbidity, s4mari:WaterTemperature, nbi:Location-South .
+
+nbi:Estacion_South-ec a saref:Sensor ;
+    rdfs:label "Electrical conductivity sensor"@en ,
+               "Sensor de conductividad eléctrica"@es ,
+               "Sensor de conductivitat elèctrica"@ca-valencia ;
+    saref:observes s4mari:WaterConductivity, s4watr:TotalDissolvedSolids, s4mari:Salinity, s4mari:WaterTemperature, nbi:Location-South .
+
+nbi:Estacion_South-ph a saref:Sensor ;
+    rdfs:label "pH sensor"@en ,
+               "Sensor de pH"@es ,
+               "Sensor de pH"@ca-valencia ;
+    saref:observes qudt_qk:Acidity, s4mari:WaterTemperature, nbi:Location-South .
+
+nbi:Estacion_South-oxygen a saref:Sensor ;
+    rdfs:label "Dissolved oxygen sensor"@en ,
+               "Sensor de oxígeno disuelto"@es ,
+               "Sensor d'oxigen dissolt"@ca-valencia ;
+    saref:observes bufr4_b13:083, s4mari:WaterTemperature, nbi:Location-South  .
+
+# southwest station
+nbi:Estacion_SouthWest a saref:Device ;
+    rdfs:label "IoT Station South-West"@en ,
+               "Estación IoT Suroeste"@es ,
+               "Estació IoT Sud-oest"@ca-valencia ;
+    saref:hasIdentifier "Estacion_SouthWest" ;
+    dcterms:publisher nbi:Publisher-UPV ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    cc:attributionName "OBEREK / UPV" ;
+    rdfs:comment "IoT Sensor site deployed to measure aquatic parameters."@en ,
+                 "Emplazamiento de sensores IoT desplegado para medir parámetros acuáticos."@es ,
+                 "Emplaçament de sensors IoT desplegat per a mesurar paràmetres aquàtics."@ca-valencia ;
+    saref:consistsOf nbi:Estacion_SouthWest-ec,
+                     nbi:Estacion_SouthWest-ph,
+                     nbi:Estacion_SouthWest-oxygen,
+                     nbi:Estacion_SouthWest-turbidity .
+
+nbi:Estacion_SouthWest-turbidity a saref:Sensor ;
+    rdfs:label "Turbidity sensor"@en ,
+               "Sensor de turbidez"@es ,
+               "Sensor de terbolesa"@ca-valencia ;
+    saref:observes s4watr:Turbidity, s4mari:WaterTemperature, nbi:Location-SouthWest .
+
+nbi:Estacion_SouthWest-ec a saref:Sensor ;
+    rdfs:label "Electrical conductivity sensor"@en ,
+               "Sensor de conductividad eléctrica"@es ,
+               "Sensor de conductivitat elèctrica"@ca-valencia ;
+    saref:observes s4mari:WaterConductivity, s4watr:TotalDissolvedSolids, s4mari:Salinity, s4mari:WaterTemperature, nbi:Location-SouthWest .
+
+nbi:Estacion_SouthWest-ph a saref:Sensor ;
+    rdfs:label "pH sensor"@en ,
+               "Sensor de pH"@es ,
+               "Sensor de pH"@ca-valencia ;
+    saref:observes qudt_qk:Acidity, s4mari:WaterTemperature, nbi:Location-SouthWest .
+
+nbi:Estacion_SouthWest-oxygen a saref:Sensor ;
+    rdfs:label "Dissolved oxygen sensor"@en ,
+               "Sensor de oxígeno disuelto"@es ,
+               "Sensor d'oxigen dissolt"@ca-valencia ;
+    saref:observes bufr4_b13:083, s4mari:WaterTemperature, nbi:Location-SouthWest .
+
+# polls
+
+nbi:OBEREK_Dashboard a saref:Device ;
+    rdfs:label "OBEREK Dashboard"@en ,
+               "Plataforma OBEREK"@es ,
+               "Plataforma OBEREK"@ca-valencia ;
+    saref:hasIdentifier "OBEREK_Dashboard" ;
+    dcterms:publisher nbi:Publisher-OBEREK ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    cc:attributionName "OBEREK" ;
+    rdfs:comment "Feedback mechanism capturing community satisfaction scores and respondent profiles."@en ,
+                 "Mecanismo de retroalimentación que recoge las puntuaciones de satisfacción de la comunidad y los perfiles de los encuestados."@es ,
+                 "Mecanisme de retroalimentació que recull les puntuacions de satisfacció de la comunitat i els perfils dels enquestats."@ca-valencia ;
+    saref:consistsOf nbi:OBEREK_Dashboard_Sensor .
+
+nbi:OBEREK_Dashboard_Sensor a saref:Sensor ;
+    rdfs:label "Community Poll Sensor"@en ,
+               "Sensor de Encuesta Comunitaria"@es ,
+               "Sensor d'Enquesta Comunitària"@ca-valencia ;
+    saref:observes nb:satisfactionScore, nb:respondentCategory, nbi:Location-Global .
+
+nbi:OBEREK_ManualPoll a saref:Device ;
+    rdfs:label "OBEREK Manual Poll Ingestion"@en ,
+               "Ingesta Manual de Encuestas OBEREK"@es ,
+               "Ingesta Manual d'Enquestes OBEREK"@ca-valencia ;
+    saref:hasIdentifier "OBEREK_ManualPoll" ;
+    dcterms:publisher nbi:Publisher-OBEREK ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    cc:attributionName "OBEREK" ;
+    rdfs:comment "Batch ingestion device for community-poll submissions collected offline (e.g. hand surveys with farmers)."@en ,
+                 "Dispositivo de ingesta por lotes de respuestas de encuestas a la comunidad recogidas fuera de línea, por ejemplo mediante encuestas presenciales a agricultores."@es ,
+                 "Dispositiu d’ingesta per lots de respostes d’enquestes a la comunitat recollides fora de línia, per exemple mitjançant enquestes presencials a agricultors."@ca-valencia ;
+    saref:consistsOf nbi:OBEREK_ManualPoll_Sensor .
+
+nbi:OBEREK_ManualPoll_Sensor a saref:Sensor ;
+    rdfs:label "Manual Community Poll Sensor"@en ,
+               "Sensor de Encuesta Comunitaria Manual"@es ,
+               "Sensor d'Enquesta Comunitària Manual"@ca-valencia ;
+    saref:observes nb:satisfactionScore, nb:respondentCategory, nbi:Location-Global .
+
+# Questions 1–4 are numeric rating questions feeding nb:satisfactionScore; question 5 is
+# the categorical respondent-category question feeding nb:respondentCategory
+nbi:CommunityPoll a nb:Poll ;
+    saref:hasIdentifier "poll_v1" ;
+    nb:hasQuestion nbi:CommunityPoll-q1,
+                   nbi:CommunityPoll-q2,
+                   nbi:CommunityPoll-q3,
+                   nbi:CommunityPoll-q4,
+                   nbi:CommunityPoll-q5 .
+
+# Each rating question (q1–q4) carries its wording (rdfs:label) and lists its own
+# nb:AnswerOption individuals.
+# The separate "Don't know / No opinion" choice carries optionCode "6", omits nb:mapsToValue,
+# and is excluded from the satisfaction average. Question q5 reuses the
+# nb:RespondentCategory enumeration as its answer options.
+
+nbi:CommunityPoll-q1 a nb:PollQuestion ;
+    saref:hasIdentifier "q_id1" ;
+    nb:assessesProperty nb:satisfactionScore ;
+    rdfs:label "Based on your perception, how would you rate the current water quality of the Albufera region?"@en ,
+               "Según su percepción, ¿cómo calificaría la calidad actual del agua de la región de l'Albufera?"@es ,
+               "Segons la seua percepció, com valoraria la qualitat actual de l'aigua de la regió de l'Albufera?"@ca-valencia ;
+    nb:hasAnswerOption nbi:CommunityPoll-q1-1,
+                       nbi:CommunityPoll-q1-2,
+                       nbi:CommunityPoll-q1-3,
+                       nbi:CommunityPoll-q1-4,
+                       nbi:CommunityPoll-q1-5,
+                       nbi:CommunityPoll-q1-dk .
+
+nbi:CommunityPoll-q1-1 a nb:AnswerOption ;
+    nb:optionCode "1" ;
+    nb:mapsToValue "1"^^xsd:integer ;
+    rdfs:label "Critical"@en , "Crítica"@es , "Crítica"@ca-valencia .
+nbi:CommunityPoll-q1-2 a nb:AnswerOption ;
+    nb:optionCode "2" ;
+    nb:mapsToValue "2"^^xsd:integer ;
+    rdfs:label "Poor"@en , "Deficiente"@es , "Deficient"@ca-valencia .
+nbi:CommunityPoll-q1-3 a nb:AnswerOption ;
+    nb:optionCode "3" ;
+    nb:mapsToValue "3"^^xsd:integer ;
+    rdfs:label "Moderate concern"@en , "Preocupación moderada"@es , "Preocupació moderada"@ca-valencia .
+nbi:CommunityPoll-q1-4 a nb:AnswerOption ;
+    nb:optionCode "4" ;
+    nb:mapsToValue "4"^^xsd:integer ;
+    rdfs:label "Good"@en , "Buena"@es , "Bona"@ca-valencia .
+nbi:CommunityPoll-q1-5 a nb:AnswerOption ;
+    nb:optionCode "5" ;
+    nb:mapsToValue "5"^^xsd:integer ;
+    rdfs:label "Very good"@en , "Muy buena"@es , "Molt bona"@ca-valencia .
+nbi:CommunityPoll-q1-dk a nb:AnswerOption ;
+    nb:optionCode "6" ;
+    rdfs:label "Don't know / No opinion"@en , "No sé / Sin opinión"@es , "No ho sé / Sense opinió"@ca-valencia .
+
+nbi:CommunityPoll-q2 a nb:PollQuestion ;
+    saref:hasIdentifier "q_id2" ;
+    nb:assessesProperty nb:satisfactionScore ;
+    rdfs:label "How would you rate the current ecological condition of habitats in the l’Albufera region, considering fish, aquatic birds, vegetation and other organisms?"@en ,
+               "¿Cómo valoraría el estado ecológico actual de los hábitats de la región de l’Albufera, teniendo en cuenta los peces, las aves acuáticas, la vegetación y otros organismos?"@es ,
+               "Com valoraria l’estat ecològic actual dels hàbitats de la regió de l’Albufera, tenint en compte els peixos, les aus aquàtiques, la vegetació i altres organismes?"@ca-valencia ;
+    nb:hasAnswerOption nbi:CommunityPoll-q2-1,
+                       nbi:CommunityPoll-q2-2,
+                       nbi:CommunityPoll-q2-3,
+                       nbi:CommunityPoll-q2-4,
+                       nbi:CommunityPoll-q2-5,
+                       nbi:CommunityPoll-q2-dk .
+
+nbi:CommunityPoll-q2-1 a nb:AnswerOption ;
+    nb:optionCode "1" ;
+    nb:mapsToValue "1"^^xsd:integer ;
+    rdfs:label "Critical"@en , "Crítica"@es , "Crítica"@ca-valencia .
+nbi:CommunityPoll-q2-2 a nb:AnswerOption ;
+    nb:optionCode "2" ;
+    nb:mapsToValue "2"^^xsd:integer ;
+    rdfs:label "Poor"@en , "Deficiente"@es , "Deficient"@ca-valencia .
+nbi:CommunityPoll-q2-3 a nb:AnswerOption ;
+    nb:optionCode "3" ;
+    nb:mapsToValue "3"^^xsd:integer ;
+    rdfs:label "Moderate concern"@en , "Preocupación moderada"@es , "Preocupació moderada"@ca-valencia .
+nbi:CommunityPoll-q2-4 a nb:AnswerOption ;
+    nb:optionCode "4" ;
+    nb:mapsToValue "4"^^xsd:integer ;
+    rdfs:label "Good"@en , "Buena"@es , "Bona"@ca-valencia .
+nbi:CommunityPoll-q2-5 a nb:AnswerOption ;
+    nb:optionCode "5" ;
+    nb:mapsToValue "5"^^xsd:integer ;
+    rdfs:label "Very good"@en , "Muy buena"@es , "Molt bona"@ca-valencia .
+nbi:CommunityPoll-q2-dk a nb:AnswerOption ;
+    nb:optionCode "6" ;
+    rdfs:label "Don't know / No opinion"@en , "No sé / Sin opinión"@es , "No ho sé / Sense opinió"@ca-valencia .
+
+nbi:CommunityPoll-q3 a nb:PollQuestion ;
+    saref:hasIdentifier "q_id3" ;
+    nb:assessesProperty nb:satisfactionScore ;
+    rdfs:label "In your opinion, how effective are the ongoing restoration activities in improving the ecological state of the Albufera region?"@en ,
+               "En su opinión, ¿en qué medida son efectivas las actividades de restauración en curso para mejorar el estado ecológico de la región de l'Albufera?"@es ,
+               "En la seua opinió, en quina mesura són efectives les activitats de restauració en curs per a millorar l'estat ecològic de la regió de l'Albufera?"@ca-valencia ;
+    nb:hasAnswerOption nbi:CommunityPoll-q3-1,
+                       nbi:CommunityPoll-q3-2,
+                       nbi:CommunityPoll-q3-3,
+                       nbi:CommunityPoll-q3-4,
+                       nbi:CommunityPoll-q3-5,
+                       nbi:CommunityPoll-q3-dk .
+
+nbi:CommunityPoll-q3-1 a nb:AnswerOption ;
+    nb:optionCode "1" ;
+    nb:mapsToValue "1"^^xsd:integer ;
+    rdfs:label "Not effective"@en , "No efectivas"@es , "Gens efectives"@ca-valencia .
+nbi:CommunityPoll-q3-2 a nb:AnswerOption ;
+    nb:optionCode "2" ;
+    nb:mapsToValue "2"^^xsd:integer ;
+    rdfs:label "Barely effective"@en , "Apenas efectivas"@es , "A penes efectives"@ca-valencia .
+nbi:CommunityPoll-q3-3 a nb:AnswerOption ;
+    nb:optionCode "3" ;
+    nb:mapsToValue "3"^^xsd:integer ;
+    rdfs:label "Somewhat effective"@en , "Algo efectivas"@es , "Una mica efectives"@ca-valencia .
+nbi:CommunityPoll-q3-4 a nb:AnswerOption ;
+    nb:optionCode "4" ;
+    nb:mapsToValue "4"^^xsd:integer ;
+    rdfs:label "Effective"@en , "Efectivas"@es , "Efectives"@ca-valencia .
+nbi:CommunityPoll-q3-5 a nb:AnswerOption ;
+    nb:optionCode "5" ;
+    nb:mapsToValue "5"^^xsd:integer ;
+    rdfs:label "Very effective"@en , "Muy efectivas"@es , "Molt efectives"@ca-valencia .
+nbi:CommunityPoll-q3-dk a nb:AnswerOption ;
+    nb:optionCode "6" ;
+    rdfs:label "Don't know / No opinion"@en , "No sé / Sin opinión"@es , "No ho sé / Sense opinió"@ca-valencia .
+
+nbi:CommunityPoll-q4 a nb:PollQuestion ;
+    saref:hasIdentifier "q_id4" ;
+    nb:assessesProperty nb:satisfactionScore ;
+    rdfs:label "In your opinion, are the current restoration activities focusing on the most important issues and areas of the Albufera region?"@en ,
+               "En su opinión, ¿se están centrando las actividades de restauración actuales en los problemas y las áreas más importantes de la región de l'Albufera?"@es ,
+               "En la seua opinió, s'estan centrant les activitats de restauració actuals en els problemes i les àrees més importants de la regió de l'Albufera?"@ca-valencia ;
+    nb:hasAnswerOption nbi:CommunityPoll-q4-1,
+                       nbi:CommunityPoll-q4-2,
+                       nbi:CommunityPoll-q4-3,
+                       nbi:CommunityPoll-q4-4,
+                       nbi:CommunityPoll-q4-5,
+                       nbi:CommunityPoll-q4-dk .
+
+nbi:CommunityPoll-q4-1 a nb:AnswerOption ;
+    nb:optionCode "1" ;
+    nb:mapsToValue "1"^^xsd:integer ;
+    rdfs:label "No, wrong focus"@en , "No, con una orientación equivocada"@es , "No, amb una orientació equivocada"@ca-valencia .
+nbi:CommunityPoll-q4-2 a nb:AnswerOption ;
+    nb:optionCode "2" ;
+    nb:mapsToValue "2"^^xsd:integer ;
+    rdfs:label "No, poorly focused"@en , "No, mal enfocadas"@es , "No, mal enfocades"@ca-valencia .
+nbi:CommunityPoll-q4-3 a nb:AnswerOption ;
+    nb:optionCode "3" ;
+    nb:mapsToValue "3"^^xsd:integer ;
+    rdfs:label "Somewhat focused"@en , "Algo enfocadas"@es , "Una mica enfocades"@ca-valencia .
+nbi:CommunityPoll-q4-4 a nb:AnswerOption ;
+    nb:optionCode "4" ;
+    nb:mapsToValue "4"^^xsd:integer ;
+    rdfs:label "Yes, mostly focused"@en , "Sí, mayormente enfocadas"@es , "Sí, majoritàriament enfocades"@ca-valencia .
+nbi:CommunityPoll-q4-5 a nb:AnswerOption ;
+    nb:optionCode "5" ;
+    nb:mapsToValue "5"^^xsd:integer ;
+    rdfs:label "Yes, well-focused"@en , "Sí, bien enfocadas"@es , "Sí, ben enfocades"@ca-valencia .
+nbi:CommunityPoll-q4-dk a nb:AnswerOption ;
+    nb:optionCode "6" ;
+    rdfs:label "Don't know / No opinion"@en , "No sé / Sin opinión"@es , "No ho sé / Sense opinió"@ca-valencia .
+
+nbi:CommunityPoll-q5 a nb:PollQuestion ;
+    saref:hasIdentifier "q_id5" ;
+    nb:assessesProperty nb:respondentCategory ;
+    rdfs:label "How would you describe your main connection to the Albufera region?"@en ,
+               "¿Cómo describiría su principal conexión con la región de l'Albufera?"@es ,
+               "Com descriuria la seua principal connexió amb la regió de l'Albufera?"@ca-valencia ;
+    nb:hasAnswerOption nb:LocalResident,
+                       nb:PrimarySectorWorker,
+                       nb:LocalBusinessRepresentative,
+                       nb:Researcher,
+                       nb:PublicOfficial,
+                       nb:OtherRespondent .
+
+# flow gauging stations (CHJ)
+# The six stations of the Confederación Hidrográfica del Júcar dataset
+# "Estaciones de aforo de L'Albufera" (F56). Names and coordinates come from that
+# dataset; the source gives UTM ETRS89 zone 30N, converted here to WGS84 lon/lat.
+
+nbi:station-08A01 a saref:Device ;
+    rdfs:label "Flow Gauging Station 08A01 — Albufera Lake Level"@en ,
+               "Estación de aforo 08A01 — Nivel del lago de l’Albufera"@es ,
+               "Estació d’aforament 08A01 — Nivell del llac de l’Albufera"@ca-valencia ;
+    saref:hasIdentifier "08A01" ;
+    dcterms:publisher nbi:Publisher-CHJ ;
+    dcterms:license <https://www.chj.es/es-es/ciudadano/Reutilizacion/Paginas/Condicionesdeuso.aspx> ;
+    cc:attributionName "Confederación Hidrográfica del Júcar (CHJ)" ;
+    nb:requiresLastUpdateDate true ;
+    rdfs:comment "Flow gauging station monitoring flow volume, flow rate, and water level."@en ,
+                 "Estación de aforo que monitoriza el volumen de agua, el caudal y el nivel del agua."@es ,
+                 "Estació d’aforament que monitoritza el volum d’aigua, el cabal i el nivell de l’aigua."@ca-valencia ;
+    geo:hasGeometry nbi:Geometry-08A01 ;
+    saref:consistsOf nbi:sensor-08A01 .
+
+nbi:Geometry-08A01 a geo:Geometry ;
+    geo:asWKT "POINT(-0.323424 39.348732)"^^geo:wktLiteral .
+
+nbi:sensor-08A01 a s4watr:WaterMeter ;
+    rdfs:label "Flow Gauge 08A01 — Albufera Lake Level"@en ,
+               "Estación de aforo 08A01 — Nivel del lago de l’Albufera"@es ,
+               "Estació d’aforament 08A01 — Nivell del llac de l’Albufera"@ca-valencia ;
+    saref:observes s4watr:FlowVolume, s4watr:FlowRate, wmdr_terr:12252, nbi:Location-Global .
+
+nbi:station-08A02 a saref:Device ;
+    rdfs:label "Flow Gauging Station 08A02 — Gola de Pujol"@en ,
+               "Estación de Aforo 08A02 — Gola de Pujol"@es ,
+               "Estació d'Aforament 08A02 — Gola del Pujol"@ca-valencia ;
+    saref:hasIdentifier "08A02" ;
+    dcterms:publisher nbi:Publisher-CHJ ;
+    dcterms:license <https://www.chj.es/es-es/ciudadano/Reutilizacion/Paginas/Condicionesdeuso.aspx> ;
+    cc:attributionName "Confederación Hidrográfica del Júcar (CHJ)" ;
+    nb:requiresLastUpdateDate true ;
+    rdfs:comment "Flow gauging station monitoring flow volume, flow rate, and water level."@en ,
+                 "Estación de aforo que monitoriza el volumen de agua, el caudal y el nivel del agua."@es ,
+                 "Estació d’aforament que monitoritza el volum d’aigua, el cabal i el nivell de l’aigua."@ca-valencia ;
+    geo:hasGeometry nbi:Geometry-08A02 ;
+    saref:consistsOf nbi:sensor-08A02 .
+
+nbi:Geometry-08A02 a geo:Geometry ;
+    geo:asWKT "POINT(-0.316992 39.349448)"^^geo:wktLiteral .
+
+nbi:sensor-08A02 a s4watr:WaterMeter ;
+    rdfs:label "Flow Gauge 08A02 — Gola de Pujol"@en ,
+               "Estación de aforo 08A02 — Gola de Pujol"@es ,
+               "Estació d’aforament 08A02 — Gola del Pujol"@ca-valencia ;
+    saref:observes s4watr:FlowVolume, s4watr:FlowRate, wmdr_terr:12252, nbi:Location-Global .
+
+nbi:station-08A03 a saref:Device ;
+    rdfs:label "Flow Gauging Station 08A03 — Gola de Perellonet"@en ,
+               "Estación de Aforo 08A03 — Gola de Perellonet"@es ,
+               "Estació d'Aforament 08A03 — Gola del Perellonet"@ca-valencia ;
+    saref:hasIdentifier "08A03" ;
+    dcterms:publisher nbi:Publisher-CHJ ;
+    dcterms:license <https://www.chj.es/es-es/ciudadano/Reutilizacion/Paginas/Condicionesdeuso.aspx> ;
+    cc:attributionName "Confederación Hidrográfica del Júcar (CHJ)" ;
+    nb:requiresLastUpdateDate true ;
+    rdfs:comment "Flow gauging station monitoring flow volume, flow rate, and water level."@en ,
+                 "Estación de aforo que monitoriza el volumen de agua, el caudal y el nivel del agua."@es ,
+                 "Estació d’aforament que monitoritza el volum d’aigua, el cabal i el nivell de l’aigua."@ca-valencia ;
+    geo:hasGeometry nbi:Geometry-08A03 ;
+    saref:consistsOf nbi:sensor-08A03 .
+
+nbi:Geometry-08A03 a geo:Geometry ;
+    geo:asWKT "POINT(-0.296561 39.309345)"^^geo:wktLiteral .
+
+nbi:sensor-08A03 a s4watr:WaterMeter ;
+    rdfs:label "Flow Gauge 08A03 — Gola de Perellonet"@en ,
+               "Estación de aforo 08A03 — Gola de Perellonet"@es ,
+               "Estació d’aforament 08A03 — Gola del Perellonet"@ca-valencia ;
+    saref:observes s4watr:FlowVolume, s4watr:FlowRate, wmdr_terr:12252, nbi:Location-Global .
+
+nbi:station-08A04 a saref:Device ;
+    rdfs:label "Flow Gauging Station 08A04 — Gola de Perelló"@en ,
+               "Estación de Aforo 08A04 — Gola de Perelló"@es ,
+               "Estació d'Aforament 08A04 — Gola del Perelló"@ca-valencia ;
+    saref:hasIdentifier "08A04" ;
+    dcterms:publisher nbi:Publisher-CHJ ;
+    dcterms:license <https://www.chj.es/es-es/ciudadano/Reutilizacion/Paginas/Condicionesdeuso.aspx> ;
+    cc:attributionName "Confederación Hidrográfica del Júcar (CHJ)" ;
+    nb:requiresLastUpdateDate true ;
+    rdfs:comment "Flow gauging station monitoring flow volume, flow rate, and water level."@en ,
+                 "Estación de aforo que monitoriza el volumen de agua, el caudal y el nivel del agua."@es ,
+                 "Estació d’aforament que monitoritza el volum d’aigua, el cabal i el nivell de l’aigua."@ca-valencia ;
+    geo:hasGeometry nbi:Geometry-08A04 ;
+    saref:consistsOf nbi:sensor-08A04 .
+
+nbi:Geometry-08A04 a geo:Geometry ;
+    geo:asWKT "POINT(-0.278769 39.279201)"^^geo:wktLiteral .
+
+nbi:sensor-08A04 a s4watr:WaterMeter ;
+    rdfs:label "Flow Gauge 08A04 — Gola de Perelló"@en ,
+               "Estación de aforo 08A04 — Gola de Perelló"@es ,
+               "Estació d’aforament 08A04 — Gola del Perelló"@ca-valencia ;
+    saref:observes s4watr:FlowVolume, s4watr:FlowRate, wmdr_terr:12252, nbi:Location-Global .
+
+nbi:station-08A05 a saref:Device ;
+    rdfs:label "Flow Gauging Station 08A05 — Gola del Rei"@en ,
+               "Estación de Aforo 08A05 — Gola del Rei"@es ,
+               "Estació d’aforament 08A05 — Gola del Rei"@ca-valencia ;
+    saref:hasIdentifier "08A05" ;
+    dcterms:publisher nbi:Publisher-CHJ ;
+    dcterms:license <https://www.chj.es/es-es/ciudadano/Reutilizacion/Paginas/Condicionesdeuso.aspx> ;
+    cc:attributionName "Confederación Hidrográfica del Júcar (CHJ)" ;
+    nb:requiresLastUpdateDate true ;
+    rdfs:comment "Flow gauging station monitoring flow volume, flow rate, and water level."@en ,
+                 "Estación de aforo que monitoriza el volumen de agua, el caudal y el nivel del agua."@es ,
+                 "Estació d’aforament que monitoritza el volum d’aigua, el cabal i el nivell de l’aigua."@ca-valencia ;
+    geo:hasGeometry nbi:Geometry-08A05 ;
+    saref:consistsOf nbi:sensor-08A05 .
+
+nbi:Geometry-08A05 a geo:Geometry ;
+    geo:asWKT "POINT(-0.259844 39.248758)"^^geo:wktLiteral .
+
+nbi:sensor-08A05 a s4watr:WaterMeter ;
+    rdfs:label "Flow Gauge 08A05 — Gola del Rei"@en ,
+               "Estación de aforo 08A05 — Gola del Rei"@es ,
+               "Estació d’aforament 08A05 — Gola del Rei"@ca-valencia ;
+    saref:observes s4watr:FlowVolume, s4watr:FlowRate, wmdr_terr:12252, nbi:Location-Global .
+
+nbi:station-08A06 a saref:Device ;
+    rdfs:label "Flow Gauging Station 08A06 — Gola de Sant Llorenç"@en ,
+               "Estación de Aforo 08A06 — Gola de Sant Llorenç"@es ,
+               "Estació d’aforament 08A06 — Gola de Sant Llorenç"@ca-valencia ;
+    saref:hasIdentifier "08A06" ;
+    dcterms:publisher nbi:Publisher-CHJ ;
+    dcterms:license <https://www.chj.es/es-es/ciudadano/Reutilizacion/Paginas/Condicionesdeuso.aspx> ;
+    cc:attributionName "Confederación Hidrográfica del Júcar (CHJ)" ;
+    nb:requiresLastUpdateDate true ;
+    rdfs:comment "Flow gauging station monitoring flow volume, flow rate, and water level."@en ,
+                 "Estación de aforo que monitoriza el volumen de agua, el caudal y el nivel del agua."@es ,
+                 "Estació d’aforament que monitoritza el volum d’aigua, el cabal i el nivell de l’aigua."@ca-valencia ;
+    geo:hasGeometry nbi:Geometry-08A06 ;
+    saref:consistsOf nbi:sensor-08A06 .
+
+nbi:Geometry-08A06 a geo:Geometry ;
+    geo:asWKT "POINT(-0.233113 39.190423)"^^geo:wktLiteral .
+
+nbi:sensor-08A06 a s4watr:WaterMeter ;
+    rdfs:label "Flow Gauge 08A06 — Gola de Sant Llorenç"@en ,
+               "Estación de aforo 08A06 — Gola de Sant Llorenç"@es ,
+               "Estació d’aforament 08A06 — Gola de Sant Llorenç"@ca-valencia ;
+    saref:observes s4watr:FlowVolume, s4watr:FlowRate, wmdr_terr:12252, nbi:Location-Global .
+
+# weather stations
+
+nbi:station-tancatestell a saref:Device ;
+    rdfs:label "Tancat de l'Estell"@en ,
+               "Tancat de l'Estell"@es ,
+               "Tancat de l'Estell"@ca-valencia ;
+    dcterms:publisher nbi:Publisher-FundacioAssut ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    cc:attributionName "Fundació Assut" ;
+    saref:hasIdentifier "tancatlestell" ;
+    rdfs:comment "Local weather station providing meteorological and agrometeorological data."@en ,
+                 "Estación meteorológica local que proporciona datos meteorológicos y agrometeorológicos."@es ,
+                 "Estació meteorològica local que proporciona dades meteorològiques i agrometeorològiques."@ca-valencia ;
+    saref:consistsOf nbi:Sensor-tancatestell .
+
+nbi:Sensor-tancatestell a saref:Sensor ;
+    rdfs:label "Tancat de l'Estell — meteorological sensor"@en ,
+               "Tancat de l'Estell — sensor meteorológico"@es ,
+               "Tancat de l'Estell — sensor meteorològic"@ca-valencia ;
+    saref:observes s4watr:Precipitation, s4watr:ExternalTemperature, wmo:windDirection, wmdr:573, nb:hoja, nb:hoja_min, nb:hoja_max, nb:hoja_h, nb:hoja_h24, s4watr:Humidity, wmo:windSpeed, bufr4_b13:031, s4watr:AtmosphericPressure, nbi:Location-South ;
+    dcterms:modified "2026-10-13"^^xsd:date ;
+    skos:changeNote "2026-10-13: switched to wmdr:573 and bufr4_b13:031."@en ,
+                    "2026-10-13: cambiado a wmdr:573 y bufr4_b13:031."@es ,
+                    "2026-10-13: canviat a wmdr:573 i bufr4_b13:031."@ca-valencia .
+
+# locations
+
+nbi:Location-Global a saref:FeatureOfInterest ;
+    rdfs:label "Global — l’Albufera"@en ,
+               "Global — l’Albufera"@es ,
+               "Global — l’Albufera"@ca-valencia ;
+    rdfs:comment "Represents the l'Albufera lake as a whole. All three KEIs are properties of interest of this location; KEI-3 is exclusively global. Flow gauging station records are assigned to this location as context: they cannot be attributed to any sub-location and do not enter KEI scoring."@en ,
+                 "Representa el lago de l'Albufera en su conjunto. Los tres KEI son propiedades de interés de esta ubicación; el KEI-3 es exclusivamente global. Los registros de las estaciones de aforo se asignan a esta ubicación como información contextual: no pueden atribuirse a ninguna sububicación y no intervienen en la puntuación de los KEI."@es ,
+                 "Representa el llac de l'Albufera en conjunt. Els tres KEI són propietats d'interés d'esta ubicació; el KEI-3 és exclusivament global. Els registres de les estacions d'aforament s'assignen a esta ubicació com a informació contextual: no es poden atribuir a cap sububicació i no intervenen en la puntuació dels KEI."@ca-valencia ;
+    saref:hasPropertyOfInterest nb:KEI-1, nb:KEI-2, nb:KEI-3 ;
+    geo:hasBoundingBox nbi:Geometry-Global ;
+    nb:hasAquaticBoundingBox nbi:Geometry-Global-Aquatic .
+nbi:Geometry-Global a geo:Geometry ;
+    geo:asWKT "POLYGON((-0.398608 39.293126, -0.295952 39.293126, -0.295952 39.398265, -0.398608 39.398265, -0.398608 39.293126))"^^geo:wktLiteral .
+
+nbi:Location-North a saref:FeatureOfInterest ;
+    rdfs:label "North"@en ,
+               "Norte"@es ,
+               "Nord"@ca-valencia ;
+    saref:hasPropertyOfInterest nb:KEI-1, nb:KEI-2 ;
+    geo:hasBoundingBox nbi:Geometry-North ;
+    nb:hasAquaticBoundingBox nbi:Geometry-North-Aquatic .
+nbi:Geometry-North a geo:Geometry ;
+    geo:asWKT "POLYGON((-0.350868 39.358989, -0.334687 39.358989, -0.334687 39.376042, -0.350868 39.376042, -0.350868 39.358989))"^^geo:wktLiteral .
+
+nbi:Location-South a saref:FeatureOfInterest ;
+    rdfs:label "South"@en ,
+               "Sur"@es ,
+               "Sud"@ca-valencia ;
+    saref:hasPropertyOfInterest nb:KEI-1, nb:KEI-2 ;
+    geo:hasBoundingBox nbi:Geometry-South ;
+    nb:hasAquaticBoundingBox nbi:Geometry-South-Aquatic .
+nbi:Geometry-South a geo:Geometry ;
+    geo:asWKT "POLYGON((-0.339319 39.305529, -0.331220 39.305529, -0.331220 39.311855, -0.339319 39.311855, -0.339319 39.305529))"^^geo:wktLiteral .
+
+nbi:Location-SouthWest a saref:FeatureOfInterest ;
+    rdfs:label "South-West"@en ,
+               "Suroeste"@es ,
+               "Sud-oest"@ca-valencia ;
+    saref:hasPropertyOfInterest nb:KEI-1, nb:KEI-2 ;
+    geo:hasBoundingBox nbi:Geometry-SouthWest ;
+    nb:hasAquaticBoundingBox nbi:Geometry-SouthWest-Aquatic .
+nbi:Geometry-SouthWest a geo:Geometry ;
+    geo:asWKT "POLYGON((-0.372886 39.302923, -0.364667 39.302923, -0.364667 39.308236, -0.372886 39.308236, -0.372886 39.302923))"^^geo:wktLiteral .
+
+# Water tiles: one stretch of open lagoon paired with each of the four
+# locations above, via nb:hasAquaticBoundingBox. The satellite water quality
+# indices (chlorophyll, Secchi disk depth, phycocyanin) are measured over the
+# tile, not over the location's own box.
+#
+# A tile is NOT a sub-area of its location. Only Global contains its tile;
+# North, South and South-West sit in the rice fields and are disjoint from the
+# water paired with them. Each location is paired with the nearest open lagoon, and its reading
+# is reported under the location's name.
+
+nbi:Geometry-Global-Aquatic a geo:Geometry ;
+    geo:asWKT "POLYGON((-0.364609 39.327127, -0.335083 39.327127, -0.335083 39.349299, -0.364609 39.349299, -0.364609 39.327127))"^^geo:wktLiteral .
+nbi:Geometry-North-Aquatic a geo:Geometry ;
+    geo:asWKT "POLYGON((-0.350868 39.339874, -0.329075 39.339874, -0.329075 39.352050, -0.350868 39.352050, -0.350868 39.339874))"^^geo:wktLiteral .
+nbi:Geometry-South-Aquatic a geo:Geometry ;
+    geo:asWKT "POLYGON((-0.342121 39.325932, -0.331993 39.325932, -0.331993 39.334563, -0.342121 39.334563, -0.342121 39.325932))"^^geo:wktLiteral .
+nbi:Geometry-SouthWest-Aquatic a geo:Geometry ;
+    geo:asWKT "POLYGON((-0.367270 39.312254, -0.358944 39.312254, -0.358944 39.318230, -0.367270 39.318230, -0.367270 39.312254))"^^geo:wktLiteral .
+
+# copernicus
+
+nbi:Copernicus_System a saref:Device ;
+    rdfs:label "Copernicus Sentinel-2 System"@en ,
+               "Sistema Copernicus Sentinel-2"@es ,
+               "Sistema Copernicus Sentinel-2"@ca-valencia ;
+    saref:hasIdentifier "Copernicus" ;
+    dcterms:publisher nbi:Publisher-Copernicus ;
+    dcterms:license <https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice> ;
+    nb:attributionText "Contains modified Copernicus Sentinel data" ;
+    rdfs:comment "Sentinel-2 satellite mission of the EU Copernicus Earth observation programme."@en ,
+                 "Misión de satélites Sentinel-2 del programa europeo de observación de la Tierra Copernicus."@es ,
+                 "Missió de satèl·lits Sentinel-2 del programa europeu d'observació de la Terra Copernicus."@ca-valencia ;
+    saref:consistsOf nbi:Sensor-Sentinel-2_Global,
+                     nbi:Sensor-Sentinel-2_North,
+                     nbi:Sensor-Sentinel-2_South,
+                     nbi:Sensor-Sentinel-2_SouthWest ;
+    dcterms:modified "2026-10-13"^^xsd:date ;
+    skos:changeNote "2026-10-13: statistic types switched to DDI terms."@en ,
+                    "2026-10-13: tipos de estadístico cambiados a términos DDI."@es ,
+                    "2026-10-13: tipus d'estadístic canviats a termes DDI."@ca-valencia .
+
+nbi:Sensor-Sentinel-2_Global a saref:Sensor ;
+    rdfs:label "Sentinel-2 Global"@en ,
+               "Sentinel-2 Global"@es ,
+               "Sentinel-2 Global"@ca-valencia ;
+    saref:observes nb:chlorophyll, nb:secchiDiskDepth, nb:phycocyanin, nb:ndvi, nb:ndmi, nb:ndwi, nb:evi, nb:fcover, nb:waterCoverage, nb:vegetationCoverage, nbi:Location-Global .
+
+nbi:Sensor-Sentinel-2_North a saref:Sensor ;
+    rdfs:label "Sentinel-2 North"@en ,
+               "Sentinel-2 Norte"@es ,
+               "Sentinel-2 Nord"@ca-valencia ;
+    saref:observes nb:chlorophyll, nb:secchiDiskDepth, nb:phycocyanin, nb:ndvi, nb:ndmi, nb:ndwi, nb:evi, nb:fcover, nb:waterCoverage, nb:vegetationCoverage, nbi:Location-North .
+
+nbi:Sensor-Sentinel-2_South a saref:Sensor ;
+    rdfs:label "Sentinel-2 South"@en ,
+               "Sentinel-2 Sur"@es ,
+               "Sentinel-2 Sud"@ca-valencia ;
+    saref:observes nb:chlorophyll, nb:secchiDiskDepth, nb:phycocyanin, nb:ndvi, nb:ndmi, nb:ndwi, nb:evi, nb:fcover, nb:waterCoverage, nb:vegetationCoverage, nbi:Location-South .
+
+nbi:Sensor-Sentinel-2_SouthWest a saref:Sensor ;
+    rdfs:label "Sentinel-2 South-West"@en ,
+               "Sentinel-2 Suroeste"@es ,
+               "Sentinel-2 Sud-oest"@ca-valencia ;
+    saref:observes nb:chlorophyll, nb:secchiDiskDepth, nb:phycocyanin, nb:ndvi, nb:ndmi, nb:ndwi, nb:evi, nb:fcover, nb:waterCoverage, nb:vegetationCoverage, nbi:Location-SouthWest .
+
+# rice blast risk index (PRI) — piriculariosis, caused by Pyricularia oryzae.
+# One calculator per station-backed location: only South (Tancat de l'Estell).
+# North, Global and South-West have no weather station.
+
+nbi:PyriculariaRisk_System a saref:Device ;
+    rdfs:label "Rice Blast Risk System"@en ,
+               "Sistema de Riesgo de Piriculariosis"@es ,
+               "Sistema de Risc de Piriculariosi"@ca-valencia ;
+    saref:hasIdentifier "PyriculariaRisk_System" ;
+    dcterms:publisher nbi:Publisher-OBEREK ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    cc:attributionName "OBEREK" ;
+    rdfs:comment "System calculating the Rice Blast Risk Index (PRI) — the risk of rice blast, or piriculariosis, caused by Pyricularia oryzae — from agrometeorological inputs."@en ,
+                 "Sistema que calcula el índice de riesgo de piriculariosis (PRI), causada por Pyricularia oryzae, a partir de datos agrometeorológicos."@es ,
+                 "Sistema que calcula l’índex de risc de piriculariosi (PRI), causada per Pyricularia oryzae, a partir de dades agrometeorològiques."@ca-valencia ;
+    saref:consistsOf nbi:PyriculariaRisk_Calculator-South .
+
+nbi:PyriculariaRisk_Calculator-South a saref:Sensor ;
+    rdfs:label "Rice Blast Risk Calculator — South"@en ,
+               "Calculadora de Riesgo de Piriculariosis — Sur"@es ,
+               "Calculadora de Risc de Piriculariosi — Sud"@ca-valencia ;
+    rdfs:comment "Derives the Rice Blast Risk Index for the South location from the Tancat de l'Estell weather station observations."@en ,
+                 "Deriva el Índice de Riesgo de Piriculariosis para la ubicación Sur a partir de las observaciones de la estación meteorológica de Tancat de l'Estell."@es ,
+                 "Deriva l'Índex de Risc de Piriculariosi per a la ubicació Sud a partir de les observacions de l'estació meteorològica del Tancat de l'Estell."@ca-valencia ;
+    saref:observes nb:pyricularia_risk_index, nbi:Location-South .
+
+# kei
+
+nbi:KEI_System a saref:Device ;
+    rdfs:label "KEI Calculation System"@en ,
+               "Sistema de Cálculo de KEI"@es ,
+               "Sistema de Càlcul de KEI"@ca-valencia ;
+    saref:hasIdentifier "KEI_System" ;
+    dcterms:publisher nbi:Publisher-OBEREK ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    cc:attributionName "OBEREK" ;
+    rdfs:comment "System calculating Key Ecological Indicators (KEI)."@en ,
+                 "Sistema que calcula los Indicadores Ecológicos Clave (KEI)."@es ,
+                 "Sistema que calcula els Indicadors Ecològics Clau (KEI)."@ca-valencia ;
+    saref:consistsOf nbi:KEI-1_Calculator-North,
+                     nbi:KEI-1_Calculator-South,
+                     nbi:KEI-1_Calculator-SouthWest,
+                     nbi:KEI-1_Calculator-Global,
+                     nbi:KEI-2_Calculator-North,
+                     nbi:KEI-2_Calculator-South,
+                     nbi:KEI-2_Calculator-SouthWest,
+                     nbi:KEI-2_Calculator-Global,
+                     nbi:KEI-3_Calculator-Global .
+
+nbi:KEI-1_Calculator-North a saref:Sensor ;
+    rdfs:label "KEI-1 Calculator — North"@en ,
+               "Calculadora KEI-1 — Norte"@es ,
+               "Calculadora KEI-1 — Nord"@ca-valencia ;
+    saref:observes nb:KEI-1, nb:KEI-1_RAW, nb:KEI-1_NMeasured, nb:KEI-1_NFail, nb:KEI-1_NCrit, nbi:Location-North .
+
+nbi:KEI-1_Calculator-South a saref:Sensor ;
+    rdfs:label "KEI-1 Calculator — South"@en ,
+               "Calculadora KEI-1 — Sur"@es ,
+               "Calculadora KEI-1 — Sud"@ca-valencia ;
+    saref:observes nb:KEI-1, nb:KEI-1_RAW, nb:KEI-1_NMeasured, nb:KEI-1_NFail, nb:KEI-1_NCrit, nbi:Location-South .
+
+nbi:KEI-1_Calculator-SouthWest a saref:Sensor ;
+    rdfs:label "KEI-1 Calculator — South-West"@en ,
+               "Calculadora KEI-1 — Suroeste"@es ,
+               "Calculadora del KEI-1 — Sud-oest"@ca-valencia ;
+    saref:observes nb:KEI-1, nb:KEI-1_RAW, nb:KEI-1_NMeasured, nb:KEI-1_NFail, nb:KEI-1_NCrit, nbi:Location-SouthWest .
+
+nbi:KEI-1_Calculator-Global a saref:Sensor ;
+    rdfs:label "KEI-1 Calculator — Global"@en ,
+               "Calculadora KEI-1 — Global"@es ,
+               "Calculadora KEI-1 — Global"@ca-valencia ;
+    saref:observes nb:KEI-1, nb:KEI-1_RAW, nb:KEI-1_NMeasured, nb:KEI-1_NFail, nb:KEI-1_NCrit, nbi:Location-Global .
+
+nbi:KEI-2_Calculator-North a saref:Sensor ;
+    rdfs:label "KEI-2 Calculator — North"@en ,
+               "Calculadora KEI-2 — Norte"@es ,
+               "Calculadora KEI-2 — Nord"@ca-valencia ;
+    saref:observes nb:KEI-2, nb:KEI-2-Aquatic, nb:KEI-2-Terrestrial, nb:KEI-2-Aquatic_RAW, nb:KEI-2-Terrestrial_RAW, nb:KEI-2-Aquatic_NMeasured, nb:KEI-2-Aquatic_NFail, nb:KEI-2-Aquatic_NCrit, nb:KEI-2-Terrestrial_NMeasured, nb:KEI-2-Terrestrial_NFail, nb:KEI-2-Terrestrial_NCrit, nbi:Location-North .
+
+nbi:KEI-2_Calculator-South a saref:Sensor ;
+    rdfs:label "KEI-2 Calculator — South"@en ,
+               "Calculadora KEI-2 — Sur"@es ,
+               "Calculadora KEI-2 — Sud"@ca-valencia ;
+    saref:observes nb:KEI-2, nb:KEI-2-Aquatic, nb:KEI-2-Terrestrial, nb:KEI-2-Aquatic_RAW, nb:KEI-2-Terrestrial_RAW, nb:KEI-2-Aquatic_NMeasured, nb:KEI-2-Aquatic_NFail, nb:KEI-2-Aquatic_NCrit, nb:KEI-2-Terrestrial_NMeasured, nb:KEI-2-Terrestrial_NFail, nb:KEI-2-Terrestrial_NCrit, nbi:Location-South .
+
+nbi:KEI-2_Calculator-SouthWest a saref:Sensor ;
+    rdfs:label "KEI-2 Calculator — South-West"@en ,
+               "Calculadora KEI-2 — Suroeste"@es ,
+               "Calculadora del KEI-2 — Sud-oest"@ca-valencia ;
+    saref:observes nb:KEI-2, nb:KEI-2-Aquatic, nb:KEI-2-Terrestrial, nb:KEI-2-Aquatic_RAW, nb:KEI-2-Terrestrial_RAW, nb:KEI-2-Aquatic_NMeasured, nb:KEI-2-Aquatic_NFail, nb:KEI-2-Aquatic_NCrit, nb:KEI-2-Terrestrial_NMeasured, nb:KEI-2-Terrestrial_NFail, nb:KEI-2-Terrestrial_NCrit, nbi:Location-SouthWest .
+
+nbi:KEI-2_Calculator-Global a saref:Sensor ;
+    rdfs:label "KEI-2 Calculator — Global"@en ,
+               "Calculadora KEI-2 — Global"@es ,
+               "Calculadora KEI-2 — Global"@ca-valencia ;
+    saref:observes nb:KEI-2, nb:KEI-2-Aquatic, nb:KEI-2-Terrestrial, nb:KEI-2-Aquatic_RAW, nb:KEI-2-Terrestrial_RAW, nb:KEI-2-Aquatic_NMeasured, nb:KEI-2-Aquatic_NFail, nb:KEI-2-Aquatic_NCrit, nb:KEI-2-Terrestrial_NMeasured, nb:KEI-2-Terrestrial_NFail, nb:KEI-2-Terrestrial_NCrit, nbi:Location-Global .
+
+nbi:KEI-3_Calculator-Global a saref:Sensor ;
+    rdfs:label "KEI-3 Calculator — Global"@en ,
+               "Calculadora KEI-3 — Global"@es ,
+               "Calculadora KEI-3 — Global"@ca-valencia ;
+    saref:observes nb:KEI-3, nbi:Location-Global .
+
+# baseline values for the environmental parameters used in KEI calculation
+# Provenance of each value is given with nb:baselineSource* and nb:thresholdSource*.
+
+nbi:chlorophyll-baseline a nb:PropertyBaseline ;
+    nb:forProperty nb:chlorophyll ;
+    nb:baselineValue "5.3"^^xsd:decimal ;
+    nb:warningThreshold "88.68"^^xsd:decimal ;
+    nb:criticalThreshold "354.72"^^xsd:decimal ;
+    nb:deviationDirection nb:Above ;
+    nb:bidirectional "false"^^xsd:boolean ;
+    nb:baselineSourceType "Regulation / ecological-status framework"@en ,
+                          "Normativa / marco de estado ecológico"@es ,
+                          "Normativa / marc d'estat ecològic"@ca-valencia ;
+    nb:baselineSource "Royal Decree 817/2015, Annex III, B.2, lake type L-T28 (chlorophyll-a reference)."@en ,
+                      "Real Decreto 817/2015, anexo III, B.2, tipo de lago L-T28 (referencia de clorofila-a)."@es ,
+                      "Reial decret 817/2015, annex III, B.2, tipus de llac L-T28 (referència de clorofil·la-a)."@ca-valencia ;
+    nb:thresholdSourceType "Regulation-informed derivation"@en ,
+                           "Derivación basada en la normativa"@es ,
+                           "Derivació basada en la normativa"@ca-valencia ;
+    nb:thresholdSource "OBEREK warning and critical boundaries derived from selected ecological quality ratios (EQRs) for L-T28 in RD 817/2015."@en ,
+                       "Umbrales de aviso y crítico de OBEREK derivados de determinados cocientes de calidad ecológica (EQR) para L-T28 del RD 817/2015."@es ,
+                       "Llindars d’avís i crític d’OBEREK derivats de determinats quocients de qualitat ecològica (EQR) per a L-T28 del RD 817/2015."@ca-valencia .
+
+nbi:secchiDiskDepth-baseline a nb:PropertyBaseline ;
+    nb:forProperty nb:secchiDiskDepth ;
+    nb:baselineValue "0.60"^^xsd:decimal ;
+    nb:warningThreshold "33.33"^^xsd:decimal ;
+    nb:criticalThreshold "50"^^xsd:decimal ;
+    nb:deviationDirection nb:Below ;
+    nb:bidirectional "false"^^xsd:boolean ;
+    nb:baselineSourceType "Scientific literature + expert adaptation"@en ,
+                          "Literatura científica + adaptación de expertos"@es ,
+                          "Literatura científica + adaptació d'experts"@ca-valencia ;
+    nb:baselineSource "Sòria-Perpinyà et al. (2020), Limnetica 39(1):373–386."@en ,
+                      "Sòria-Perpinyà et al. (2020), Limnetica 39(1):373–386."@es ,
+                      "Sòria-Perpinyà et al. (2020), Limnetica 39(1):373–386."@ca-valencia ;
+    nb:thresholdSourceType "Project / expert judgement"@en ,
+                           "Criterio del proyecto / de expertos"@es ,
+                           "Criteri del projecte / d'experts"@ca-valencia ;
+    nb:thresholdSource "OBEREK operational thresholds (provisional)."@en ,
+                       "Umbrales operativos de OBEREK (provisionales)."@es ,
+                       "Llindars operatius d'OBEREK (provisionals)."@ca-valencia .
+
+nbi:phycocyanin-baseline a nb:PropertyBaseline ;
+    nb:forProperty nb:phycocyanin ;
+    nb:baselineValue "30"^^xsd:decimal ;
+    nb:warningThreshold "0.01"^^xsd:decimal ;
+    nb:criticalThreshold "200"^^xsd:decimal ;
+    nb:deviationDirection nb:Above ;
+    nb:bidirectional "false"^^xsd:boolean ;
+    nb:baselineSourceType "Scientific literature + international guidance"@en ,
+                          "Literatura científica + guías internacionales"@es ,
+                          "Literatura científica + guies internacionals"@ca-valencia ;
+    nb:baselineSource "Sòria-Perpinyà et al. (2020), STOTEN 698:134305; WHO (1999); Brient et al. (2008)."@en ,
+                      "Sòria-Perpinyà et al. (2020), STOTEN 698:134305; WHO (1999); Brient et al. (2008)."@es ,
+                      "Sòria-Perpinyà et al. (2020), STOTEN 698:134305; WHO (1999); Brient et al. (2008)."@ca-valencia ;
+    nb:thresholdSourceType "Scientific/guidance-informed operational classification"@en ,
+                           "Clasificación operativa basada en literatura científica y guías"@es ,
+                           "Classificació operativa basada en literatura científica i guies"@ca-valencia ;
+    nb:thresholdSource "Sòria-Perpinyà et al. (2020), Science of the Total Environment 698, 134305, Table 2: phycocyanin surveillance levels derived using Brient et al. (2008) from WHO (1999) guidance. Adapted as OBEREK operational boundaries, not toxin or legal ecological-status limits."@en ,
+                       "Sòria-Perpinyà et al. (2020), Science of the Total Environment 698, 134305, tabla 2: niveles de vigilancia de ficocianina derivados mediante Brient et al. (2008) de las guías de la OMS (1999). Adaptados como límites operativos de OBEREK, no como límites de toxinas o de estado ecológico normativo."@es ,
+                       "Sòria-Perpinyà et al. (2020), Science of the Total Environment 698, 134305, taula 2: nivells de vigilància de ficocianina derivats mitjançant Brient et al. (2008) de les guies de l’OMS (1999). Adaptats com a límits operatius d’OBEREK, no com a límits de toxines o d’estat ecològic normatiu."@ca-valencia .
+
+nbi:waterConductivity-baseline a nb:PropertyBaseline ;
+    nb:forProperty s4mari:WaterConductivity ;
+    nb:baselineValue "1400"^^xsd:decimal ;
+    nb:warningThreshold "25"^^xsd:decimal ;
+    nb:criticalThreshold "50"^^xsd:decimal ;
+    nb:deviationDirection nb:Above ;
+    nb:bidirectional "false"^^xsd:boolean ;
+    nb:baselineSourceType "Local technical evidence / adapted project reference"@en ,
+                          "Evidencia técnica local / referencia del proyecto adaptada"@es ,
+                          "Evidència tècnica local / referència del projecte adaptada"@ca-valencia ;
+    nb:baselineSource "LIFE+ Albufera technical documentation; local water-quality and irrigation-salinity context."@en ,
+                      "Documentación técnica LIFE+ Albufera; contexto local de calidad del agua y salinidad del agua de riego."@es ,
+                      "Documentació tècnica LIFE+ Albufera; context local de qualitat de l'aigua i salinitat de l'aigua de reg."@ca-valencia ;
+    nb:thresholdSourceType "Project / expert judgement"@en ,
+                           "Criterio del proyecto / de expertos"@es ,
+                           "Criteri del projecte / d'experts"@ca-valencia ;
+    nb:thresholdSource "OBEREK operational definition."@en ,
+                       "Definición operativa de OBEREK."@es ,
+                       "Definició operativa d'OBEREK."@ca-valencia .
+
+nbi:salinity-baseline a nb:PropertyBaseline ;
+    nb:forProperty s4mari:Salinity ;
+    nb:baselineValue "800"^^xsd:decimal ;
+    nb:warningThreshold "100"^^xsd:decimal ;
+    nb:criticalThreshold "300"^^xsd:decimal ;
+    nb:deviationDirection nb:Above ;
+    nb:bidirectional "false"^^xsd:boolean ;
+    nb:baselineSourceType "Local technical evidence + general guidance"@en ,
+                          "Evidencia técnica local + guías generales"@es ,
+                          "Evidència tècnica local + guies generals"@ca-valencia ;
+    nb:baselineSource "LIFE+ Albufera technical documentation; local salinity context; FAO irrigation-water guidance."@en ,
+                      "Documentación técnica LIFE+ Albufera; contexto local de salinidad; guías de la FAO sobre agua de riego."@es ,
+                      "Documentació tècnica LIFE+ Albufera; context local de salinitat; guies de la FAO sobre aigua de reg."@ca-valencia ;
+    nb:thresholdSourceType "Project / expert judgement"@en ,
+                           "Criterio del proyecto / de expertos"@es ,
+                           "Criteri del projecte / d'experts"@ca-valencia ;
+    nb:thresholdSource "OBEREK operational definition."@en ,
+                       "Definición operativa de OBEREK."@es ,
+                       "Definició operativa d'OBEREK."@ca-valencia .
+
+nbi:oxygen-baseline a nb:PropertyBaseline ;
+    nb:forProperty bufr4_b13:083 ;
+    nb:baselineValue "8"^^xsd:decimal ;
+    nb:warningThreshold "30"^^xsd:decimal ;
+    nb:criticalThreshold "60"^^xsd:decimal ;
+    nb:bidirectional "true"^^xsd:boolean ;
+    nb:baselineSourceType "Local technical / monitoring evidence + project adaptation"@en ,
+                          "Evidencia técnica / de seguimiento local + adaptación del proyecto"@es ,
+                          "Evidència tècnica / de seguiment local + adaptació del projecte"@ca-valencia ;
+    nb:baselineSource "Albufera technical/monitoring evidence reviewed in OBEREK; final operational reference 8 mg/L."@en ,
+                      "Evidencia técnica y de seguimiento de l'Albufera revisada en OBEREK; referencia operativa final de 8 mg/L."@es ,
+                      "Evidència tècnica i de seguiment de l'Albufera revisada en OBEREK; referència operativa final de 8 mg/L."@ca-valencia ;
+    nb:thresholdSourceType "Project / expert judgement"@en ,
+                           "Criterio del proyecto / de expertos"@es ,
+                           "Criteri del projecte / d'experts"@ca-valencia ;
+    nb:thresholdSource "OBEREK operational definition."@en ,
+                       "Definición operativa de OBEREK."@es ,
+                       "Definició operativa d'OBEREK."@ca-valencia .
+
+nbi:turbidity-baseline a nb:PropertyBaseline ;
+    nb:forProperty s4watr:Turbidity ;
+    nb:baselineValue "30"^^xsd:decimal ;
+    nb:warningThreshold "50"^^xsd:decimal ;
+    nb:criticalThreshold "100"^^xsd:decimal ;
+    nb:deviationDirection nb:Above ;
+    nb:bidirectional "false"^^xsd:boolean ;
+    nb:baselineSourceType "Local technical / monitoring evidence"@en ,
+                          "Evidencia técnica / de seguimiento local"@es ,
+                          "Evidència tècnica / de seguiment local"@ca-valencia ;
+    nb:baselineSource "LIFE+ Albufera technical/monitoring information; values around 30 NTU."@en ,
+                      "Información técnica y de seguimiento LIFE+ Albufera; valores en torno a 30 NTU."@es ,
+                      "Informació tècnica i de seguiment LIFE+ Albufera; valors al voltant de 30 NTU."@ca-valencia ;
+    nb:thresholdSourceType "Project / expert judgement"@en ,
+                           "Criterio del proyecto / de expertos"@es ,
+                           "Criteri del projecte / d'experts"@ca-valencia ;
+    nb:thresholdSource "OBEREK operational definition."@en ,
+                       "Definición operativa de OBEREK."@es ,
+                       "Definició operativa d'OBEREK."@ca-valencia .
+
+nbi:acidity-baseline a nb:PropertyBaseline ;
+    nb:forProperty qudt_qk:Acidity ;
+    nb:baselineValue "7.8"^^xsd:decimal ;
+    nb:warningThreshold "10"^^xsd:decimal ;
+    nb:criticalThreshold "15"^^xsd:decimal ;
+    nb:bidirectional "true"^^xsd:boolean ;
+    nb:baselineSourceType "Local technical evidence + general ecological guidance"@en ,
+                          "Evidencia técnica local + guías ecológicas generales"@es ,
+                          "Evidència tècnica local + guies ecològiques generals"@ca-valencia ;
+    nb:baselineSource "Albufera technical/monitoring evidence; general freshwater protective ranges."@en ,
+                      "Evidencia técnica y de seguimiento de l'Albufera; rangos generales de protección para aguas dulces."@es ,
+                      "Evidència tècnica i de seguiment de l'Albufera; rangs generals de protecció per a aigües dolces."@ca-valencia ;
+    nb:thresholdSourceType "Project / expert judgement"@en ,
+                           "Criterio del proyecto / de expertos"@es ,
+                           "Criteri del projecte / d'experts"@ca-valencia ;
+    nb:thresholdSource "OBEREK operational definition."@en ,
+                       "Definición operativa de OBEREK."@es ,
+                       "Definició operativa d'OBEREK."@ca-valencia .
+
+nbi:waterTemperature-baseline a nb:PropertyBaseline ;
+    nb:forProperty s4mari:WaterTemperature ;
+    nb:baselineValue "25"^^xsd:decimal ;
+    nb:warningThreshold "20"^^xsd:decimal ;
+    nb:criticalThreshold "32"^^xsd:decimal ;
+    nb:deviationDirection nb:Above ;
+    nb:bidirectional "false"^^xsd:boolean ;
+    nb:baselineSourceType "Project / expert judgement"@en ,
+                          "Criterio del proyecto / de expertos"@es ,
+                          "Criteri del projecte / d'experts"@ca-valencia ;
+    nb:baselineSource "Original OBEREK configuration (25 °C); no direct Albufera ecological threshold identified."@en ,
+                      "Configuración original de OBEREK (25 °C); no se ha identificado un umbral ecológico específico para l'Albufera."@es ,
+                      "Configuració original d'OBEREK (25 °C); no s'ha identificat cap llindar ecològic específic per a l'Albufera."@ca-valencia ;
+    nb:thresholdSourceType "Project / expert judgement"@en ,
+                           "Criterio del proyecto / de expertos"@es ,
+                           "Criteri del projecte / d'experts"@ca-valencia ;
+    nb:thresholdSource "OBEREK operational definition."@en ,
+                       "Definición operativa de OBEREK."@es ,
+                       "Definició operativa d'OBEREK."@ca-valencia .
+
+nbi:windSpeed-baseline a nb:PropertyBaseline ;
+    nb:forProperty wmo:windSpeed ;
+    nb:baselineValue "4"^^xsd:decimal ;
+    nb:warningThreshold "40"^^xsd:decimal ;
+    nb:criticalThreshold "70"^^xsd:decimal ;
+    nb:deviationDirection nb:Above ;
+    nb:bidirectional "false"^^xsd:boolean ;
+    nb:baselineSourceType "Project / expert judgement"@en ,
+                          "Criterio del proyecto / de expertos"@es ,
+                          "Criteri del projecte / d'experts"@ca-valencia ;
+    nb:baselineSource "OBEREK internal methodological decision; agronomic relevance for rice."@en ,
+                      "Decisión metodológica interna de OBEREK; relevancia agronómica para el arroz."@es ,
+                      "Decisió metodològica interna d'OBEREK; rellevància agronòmica per a l'arròs."@ca-valencia ;
+    nb:thresholdSourceType "Project / expert judgement"@en ,
+                           "Criterio del proyecto / de expertos"@es ,
+                           "Criteri del projecte / d'experts"@ca-valencia ;
+    nb:thresholdSource "OBEREK operational definition."@en ,
+                       "Definición operativa de OBEREK."@es ,
+                       "Definició operativa d'OBEREK."@ca-valencia .
+
+nbi:pyricularia-risk-index-baseline a nb:PropertyBaseline ;
+    nb:forProperty nb:pyricularia_risk_index ;
+    nb:warningThreshold "50"^^xsd:decimal ;
+    nb:criticalThreshold "99"^^xsd:decimal ;
+    nb:baselineValue "0"^^xsd:decimal ;
+    nb:deviationDirection nb:Above ;
+    nb:bidirectional "false"^^xsd:boolean ;
+    nb:baselineSourceType "Scientific literature + project synthesis"@en ,
+                          "Literatura científica + síntesis del proyecto"@es ,
+                          "Literatura científica + síntesi del projecte"@ca-valencia ;
+    nb:baselineSource "Katsantonis et al. (2017); Agenjos-Moreno et al. (2024)."@en ,
+                      "Katsantonis et al. (2017); Agenjos-Moreno et al. (2024)."@es ,
+                      "Katsantonis et al. (2017); Agenjos-Moreno et al. (2024)."@ca-valencia ;
+    nb:thresholdSourceType "Project-defined synthesis informed by literature"@en ,
+                           "Síntesis definida por el proyecto a partir de la literatura"@es ,
+                           "Síntesi definida pel projecte a partir de la literatura"@ca-valencia ;
+    nb:thresholdSource "OBEREK rule combining air temperature, relative humidity or leaf wetness, rainfall and persistence. The exact cutoffs and their combination are project-defined and literature-informed."@en ,
+                       "Regla de OBEREK que combina temperatura del aire, humedad relativa o humectación foliar, lluvia y persistencia. Los umbrales exactos y su combinación los define el proyecto a partir de la literatura."@es ,
+                       "Regla d’OBEREK que combina temperatura de l’aire, humitat relativa o humectació foliar, pluja i persistència. Els llindars exactes i la seua combinació els definix el projecte a partir de la literatura."@ca-valencia .
+
+nbi:waterTemperature-range a nb:SensorRange ;
+    nb:forProperty s4mari:WaterTemperature ;
+    nb:plausibleMin "-5"^^xsd:decimal ;
+    nb:plausibleMax "50"^^xsd:decimal .
+
+nbi:acidity-range a nb:SensorRange ;
+    nb:forProperty qudt_qk:Acidity ;
+    nb:plausibleMin "3"^^xsd:decimal ;
+    nb:plausibleMax "11"^^xsd:decimal .
+
+nbi:oxygen-range a nb:SensorRange ;
+    nb:forProperty bufr4_b13:083 ;
+    nb:plausibleMin "0"^^xsd:decimal ;
+    nb:plausibleMax "25"^^xsd:decimal .
+
+nbi:salinity-range a nb:SensorRange ;
+    nb:forProperty s4mari:Salinity ;
+    nb:plausibleMin "0"^^xsd:decimal ;
+    nb:plausibleMax "10000"^^xsd:decimal .
+
+nbi:tds-range a nb:SensorRange ;
+    nb:forProperty s4watr:TotalDissolvedSolids ;
+    nb:plausibleMin "0"^^xsd:decimal ;
+    nb:plausibleMax "10000"^^xsd:decimal .
+
+nbi:waterConductivity-range a nb:SensorRange ;
+    nb:forProperty s4mari:WaterConductivity ;
+    nb:plausibleMin "0"^^xsd:decimal ;
+    nb:plausibleMax "10000"^^xsd:decimal .
+
+nbi:turbidity-range a nb:SensorRange ;
+    nb:forProperty s4watr:Turbidity ;
+    nb:plausibleMin "0"^^xsd:decimal ;
+    nb:plausibleMax "2000"^^xsd:decimal .

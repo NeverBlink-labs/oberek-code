@@ -1,0 +1,397 @@
+prefixes:
+  nb: "https://neverblink.eu/ontologies/oberek/"
+  nbi: "https://neverblink.eu/oberek/"
+  saref: "https://saref.etsi.org/core/"
+  s4watr: "https://saref.etsi.org/saref4watr/"
+  xsd: "http://www.w3.org/2001/XMLSchema#"
+  unit: "http://qudt.org/vocab/unit/"
+  quantitykind: "http://qudt.org/vocab/quantitykind/"
+  s4mari: "https://saref.etsi.org/saref4mari/"
+  bufr4_b13: "http://codes.wmo.int/bufr4/b/13/"
+
+sources:
+  defaultSource:
+    access: data.json
+    referenceFormulation: jsonpath
+    iterator: $
+
+mappings:
+
+  sensor_ec:
+    sources: defaultSource
+    s: nbi:$(decoded_payload.name_ID)-ec
+    po:
+      - [ a, saref:Sensor ]
+      - p: saref:madeExecution
+        o:
+          - value: blank_$(decoded_payload.sampling_date)_sensor_ec_ec_obs
+            type: blank
+          - value: blank_$(decoded_payload.sampling_date)_sensor_ec_salinity_obs
+            type: blank
+          - value: blank_$(decoded_payload.sampling_date)_sensor_ec_tds_obs
+            type: blank
+          - value: blank_$(decoded_payload.sampling_date)_sensor_ec_temp_obs
+            type: blank
+
+  sensor_ec_ec_obs:
+    sources: defaultSource
+    s:
+      value: blank_$(decoded_payload.sampling_date)_sensor_ec_ec_obs
+      type: blank
+    po:
+      - [ a, saref:Observation ]
+      - [ saref:observes, s4mari:WaterConductivity ]
+      - p: saref:hasTimestamp
+        o:
+          value: "$(decoded_payload.sampling_date)"
+          datatype: xsd:dateTime
+      - p: saref:hasResult
+        o:
+          value: blank_$(decoded_payload.sampling_date)_sensor_ec_ec_val
+          type: blank
+
+  sensor_ec_ec_val:
+    sources: defaultSource
+    s:
+      value: blank_$(decoded_payload.sampling_date)_sensor_ec_ec_val
+      type: blank
+    po:
+      - [ a, saref:PropertyValue ]
+      - [ saref:isValueOfProperty, s4mari:WaterConductivity ]
+      - [ saref:isMeasuredIn, unit:MicroS-PER-CentiM ]
+      - p: saref:hasValue
+        o:
+          value: $(decoded_payload.sensor_ec.ec)
+          datatype: xsd:float
+
+  sensor_ec_salinity_obs:
+    sources: defaultSource
+    s:
+      value: blank_$(decoded_payload.sampling_date)_sensor_ec_salinity_obs
+      type: blank
+    po:
+      - [ a, saref:Observation ]
+      - [ saref:observes, s4mari:Salinity ]
+      - p: saref:hasTimestamp
+        o:
+          value: "$(decoded_payload.sampling_date)"
+          datatype: xsd:dateTime
+      - p: saref:hasResult
+        o:
+          value: blank_$(decoded_payload.sampling_date)_sensor_ec_salinity_val
+          type: blank
+
+  sensor_ec_salinity_val:
+    sources: defaultSource
+    s:
+      value: blank_$(decoded_payload.sampling_date)_sensor_ec_salinity_val
+      type: blank
+    po:
+      - [ a, saref:PropertyValue ]
+      - [ saref:isValueOfProperty, s4mari:Salinity]
+      - [ saref:isMeasuredIn, unit:MilliGM-PER-L ]
+      - p: saref:hasValue
+        o:
+          value: $(decoded_payload.sensor_ec.salinity)
+          datatype: xsd:float
+
+  sensor_ec_tds_obs:
+    sources: defaultSource
+    s:
+      value: blank_$(decoded_payload.sampling_date)_sensor_ec_tds_obs
+      type: blank
+    po:
+      - [ a, saref:Observation ]
+      - [ saref:observes, s4watr:TotalDissolvedSolids ]
+      - p: saref:hasTimestamp
+        o:
+          value: "$(decoded_payload.sampling_date)"
+          datatype: xsd:dateTime
+      - p: saref:hasResult
+        o:
+          value: blank_$(decoded_payload.sampling_date)_sensor_ec_tds_val
+          type: blank
+
+  sensor_ec_tds_val:
+    sources: defaultSource
+    s:
+      value: blank_$(decoded_payload.sampling_date)_sensor_ec_tds_val
+      type: blank
+    po:
+      - [ a, saref:PropertyValue ]
+      - [ saref:isValueOfProperty, s4watr:TotalDissolvedSolids ]
+      - [ saref:isMeasuredIn, unit:MilliGM-PER-L ]
+      - p: saref:hasValue
+        o:
+          value: $(decoded_payload.sensor_ec.tds)
+          datatype: xsd:float
+
+  sensor_ec_temp_obs:
+    sources: defaultSource
+    s:
+      value: blank_$(decoded_payload.sampling_date)_sensor_ec_temp_obs
+      type: blank
+    po:
+      - [ a, saref:Observation ]
+      - [ saref:observes, s4mari:WaterTemperature ]
+      - p: saref:hasTimestamp
+        o:
+          value: "$(decoded_payload.sampling_date)"
+          datatype: xsd:dateTime
+      - p: saref:hasResult
+        o:
+          value: blank_$(decoded_payload.sampling_date)_sensor_ec_temp_val
+          type: blank
+
+  sensor_ec_temp_val:
+    sources: defaultSource
+    s:
+      value: blank_$(decoded_payload.sampling_date)_sensor_ec_temp_val
+      type: blank
+    po:
+      - [ a, saref:PropertyValue ]
+      - [ saref:isValueOfProperty, s4mari:WaterTemperature ]
+      - [ saref:isMeasuredIn, unit:DEG_C ]
+      - p: saref:hasValue
+        o:
+          value: $(decoded_payload.sensor_ec.temp)
+          datatype: xsd:float
+
+  sensor_oxygen:
+    sources: defaultSource
+    s: nbi:$(decoded_payload.name_ID)-oxygen
+    po:
+      - [ a, saref:Sensor ]
+      - p: saref:madeExecution
+        o:
+          - value: blank_$(decoded_payload.sampling_date)_sensor_oxygen_temp_obs
+            type: blank
+          - value: blank_$(decoded_payload.sampling_date)_sensor_oxygen_value_obs
+            type: blank
+
+  sensor_oxygen_temp_obs:
+    sources: defaultSource
+    s:
+      value: blank_$(decoded_payload.sampling_date)_sensor_oxygen_temp_obs
+      type: blank
+    po:
+      - [ a, saref:Observation ]
+      - [ saref:observes, s4mari:WaterTemperature ]
+      - p: saref:hasTimestamp
+        o:
+          value: "$(decoded_payload.sampling_date)"
+          datatype: xsd:dateTime
+      - p: saref:hasResult
+        o:
+          value: blank_$(decoded_payload.sampling_date)_sensor_oxygen_temp_val
+          type: blank
+
+  sensor_oxygen_temp_val:
+    sources: defaultSource
+    s:
+      value: blank_$(decoded_payload.sampling_date)_sensor_oxygen_temp_val
+      type: blank
+    po:
+      - [ a, saref:PropertyValue ]
+      - [ saref:isValueOfProperty, s4mari:WaterTemperature ]
+      - [ saref:isMeasuredIn, unit:DEG_C ]
+      - p: saref:hasValue
+        o:
+          value: $(decoded_payload.sensor_oxygen.temp)
+          datatype: xsd:float
+
+  sensor_oxygen_value_obs:
+    sources: defaultSource
+    s:
+      value: blank_$(decoded_payload.sampling_date)_sensor_oxygen_value_obs
+      type: blank
+    po:
+      - [ a, saref:Observation ]
+      - [ saref:observes, bufr4_b13:083 ]
+      - p: saref:hasTimestamp
+        o:
+          value: "$(decoded_payload.sampling_date)"
+          datatype: xsd:dateTime
+      - p: saref:hasResult
+        o:
+          value: blank_$(decoded_payload.sampling_date)_sensor_oxygen_value_val
+          type: blank
+
+  sensor_oxygen_value_val:
+    sources: defaultSource
+    s:
+      value: blank_$(decoded_payload.sampling_date)_sensor_oxygen_value_val
+      type: blank
+    po:
+      - [ a, saref:PropertyValue ]
+      - [ saref:isValueOfProperty, bufr4_b13:083 ]
+      - [ saref:isMeasuredIn, unit:MilliGM-PER-L ]
+      - p: saref:hasValue
+        o:
+          value: $(decoded_payload.sensor_oxygen.value)
+          datatype: xsd:float
+
+  sensor_ph:
+    sources: defaultSource
+    s: nbi:$(decoded_payload.name_ID)-ph
+    po:
+      - [ a, saref:Sensor ]
+      - p: saref:madeExecution
+        o:
+          - value: blank_$(decoded_payload.sampling_date)_sensor_ph_temp_obs
+            type: blank
+          - value: blank_$(decoded_payload.sampling_date)_sensor_ph_value_obs
+            type: blank
+
+  sensor_ph_temp_obs:
+    sources: defaultSource
+    s:
+      value: blank_$(decoded_payload.sampling_date)_sensor_ph_temp_obs
+      type: blank
+    po:
+      - [ a, saref:Observation ]
+      - [ saref:observes, s4mari:WaterTemperature ]
+      - p: saref:hasTimestamp
+        o:
+          value: "$(decoded_payload.sampling_date)"
+          datatype: xsd:dateTime
+      - p: saref:hasResult
+        o:
+          value: blank_$(decoded_payload.sampling_date)_sensor_ph_temp_val
+          type: blank
+
+  sensor_ph_temp_val:
+    sources: defaultSource
+    s:
+      value: blank_$(decoded_payload.sampling_date)_sensor_ph_temp_val
+      type: blank
+    po:
+      - [ a, saref:PropertyValue ]
+      - [ saref:isValueOfProperty, s4mari:WaterTemperature ]
+      - [ saref:isMeasuredIn, unit:DEG_C ]
+      - p: saref:hasValue
+        o:
+          value: $(decoded_payload.sensor_ph.temp)
+          datatype: xsd:float
+
+  sensor_ph_value_obs:
+    sources: defaultSource
+    s:
+      value: blank_$(decoded_payload.sampling_date)_sensor_ph_value_obs
+      type: blank
+    po:
+      - [ a, saref:Observation ]
+      - [ saref:observes, quantitykind:Acidity ]
+      - p: saref:hasTimestamp
+        o:
+          value: "$(decoded_payload.sampling_date)"
+          datatype: xsd:dateTime
+      - p: saref:hasResult
+        o:
+          value: blank_$(decoded_payload.sampling_date)_sensor_ph_value_val
+          type: blank
+
+  sensor_ph_value_val:
+    sources: defaultSource
+    s:
+      value: blank_$(decoded_payload.sampling_date)_sensor_ph_value_val
+      type: blank
+    po:
+      - [ a, saref:PropertyValue ]
+      - [ saref:isValueOfProperty, quantitykind:Acidity ]
+      - [ saref:isMeasuredIn, unit:PH ]
+      - p: saref:hasValue
+        o:
+          value: $(decoded_payload.sensor_ph.value)
+          datatype: xsd:float
+
+  sensor_turbidity:
+    sources: defaultSource
+    s: nbi:$(decoded_payload.name_ID)-turbidity
+    po:
+      - [ a, saref:Sensor ]
+      - p: saref:madeExecution
+        o:
+          - value: blank_$(decoded_payload.sampling_date)_sensor_turbidity_temp_obs
+            type: blank
+          - value: blank_$(decoded_payload.sampling_date)_sensor_turbidity_value_obs
+            type: blank
+
+  sensor_turbidity_temp_obs:
+    sources: defaultSource
+    s:
+      value: blank_$(decoded_payload.sampling_date)_sensor_turbidity_temp_obs
+      type: blank
+    po:
+      - [ a, saref:Observation ]
+      - [ saref:observes, s4mari:WaterTemperature ]
+      - p: saref:hasTimestamp
+        o:
+          value: "$(decoded_payload.sampling_date)"
+          datatype: xsd:dateTime
+      - p: saref:hasResult
+        o:
+          value: blank_$(decoded_payload.sampling_date)_sensor_turbidity_temp_val
+          type: blank
+
+  sensor_turbidity_temp_val:
+    sources: defaultSource
+    s:
+      value: blank_$(decoded_payload.sampling_date)_sensor_turbidity_temp_val
+      type: blank
+    po:
+      - [ a, saref:PropertyValue ]
+      - [ saref:isValueOfProperty, s4mari:WaterTemperature ]
+      - [ saref:isMeasuredIn, unit:DEG_C ]
+      - p: saref:hasValue
+        o:
+          value: $(decoded_payload.sensor_turbidity.temp)
+          datatype: xsd:float
+
+  sensor_turbidity_value_obs:
+    sources: defaultSource
+    s:
+      value: blank_$(decoded_payload.sampling_date)_sensor_turbidity_value_obs
+      type: blank
+    po:
+      - [ a, saref:Observation ]
+      - [ saref:observes, s4watr:Turbidity ]
+      - p: saref:hasTimestamp
+        o:
+          value: "$(decoded_payload.sampling_date)"
+          datatype: xsd:dateTime
+      - p: saref:hasResult
+        o:
+          value: blank_$(decoded_payload.sampling_date)_sensor_turbidity_value_val
+          type: blank
+
+  sensor_turbidity_value_val:
+    sources: defaultSource
+    s:
+      value: blank_$(decoded_payload.sampling_date)_sensor_turbidity_value_val
+      type: blank
+    po:
+      - [ a, saref:PropertyValue ]
+      - [ saref:isValueOfProperty, s4watr:Turbidity ]
+      - [ saref:isMeasuredIn, unit:NTU ]
+      - p: saref:hasValue
+        o:
+          value: $(decoded_payload.sensor_turbidity.value)
+          datatype: xsd:float
+
+  date-id:
+    sources:
+      - defaultSource
+    s: nbi:$(decoded_payload.name_ID)
+    po:
+      - [a, saref:Device]
+      - p: saref:hasIdentifier
+        o:
+          value: "$(decoded_payload.name_ID)"
+          datatype: xsd:string
+      - p: saref:consistsOf
+        o:
+          - nbi:$(decoded_payload.name_ID)-ec
+          - nbi:$(decoded_payload.name_ID)-ph
+          - nbi:$(decoded_payload.name_ID)-oxygen
+          - nbi:$(decoded_payload.name_ID)-turbidity

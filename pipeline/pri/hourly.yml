@@ -1,0 +1,107 @@
+type: pipeline
+steps:
+  - source: hub.fromBroadcast
+    from: core-kafka-broadcasters/raw-avamet
+  - flow: time.withSystemTime
+  - flow: time.window
+    windowSize: 1h
+    windowSlide: 1h
+  - flow: rdf.mergeDatasets
+
+  - flow: sparql.streamGraphQuery
+    query: |
+
+      CONSTRUCT {
+        ?obs_iri a saref:Observation ;
+          saref:hasTimestamp ?now_timestamp ;
+          saref:observes ?locationUri, nb:pri_favourable_hour, nb:pri_rainfall ;
+          saref:hasResult ?fav_result, ?rain_result .
+
+        ?fav_result a saref:PropertyValue ;
+          saref:isValueOfProperty nb:pri_favourable_hour ;
+          saref:hasValue ?is_fav_val .
+
+        ?rain_result a saref:PropertyValue ;
+          saref:isValueOfProperty nb:pri_rainfall ;
+          saref:hasValue ?rain_mm_val .
+      }
+
+      WHERE {
+        { SELECT (MAX(?t) AS ?now_timestamp) WHERE { ?s saref:hasTimestamp ?t . } }
+
+        {
+          SELECT ?locationUri
+            (MAX(IF(?temp_ok && ?moisture_ok, 1, 0)) AS ?is_fav_int)
+          WHERE {
+            SERVICE <rusalka://local/oberek-metadata> {
+              ?sensor saref:observes ?locationUri .
+              ?locationUri a saref:FeatureOfInterest .
+            }
+
+            ?sensor saref:madeExecution ?obs .
+
+            ?obs saref:hasResult ?temp_r .
+            ?temp_r saref:isValueOfProperty s4watr:ExternalTemperature ;
+                    saref:hasValue ?temp_val .
+
+            OPTIONAL {
+              ?obs saref:hasResult ?rh_r .
+              ?rh_r saref:isValueOfProperty s4watr:Humidity ;
+                    saref:hasValue ?rh_val .
+            }
+
+            OPTIONAL {
+              ?obs saref:hasResult ?lw_r .
+              ?lw_r saref:isValueOfProperty nb:hoja ;
+                    saref:hasValue ?lw_val .
+            }
+
+            BIND(xsd:double(?temp_val) >= 15.0 && xsd:double(?temp_val) <= 28.0 AS ?temp_ok)
+            BIND(
+              (BOUND(?rh_val) && xsd:double(?rh_val) > 93.0) ||
+              (BOUND(?lw_val) && xsd:double(?lw_val) >= 5.0)
+              AS ?moisture_ok
+            )
+          }
+          GROUP BY ?locationUri
+        }
+
+        OPTIONAL {
+          SELECT ?locationUri (SUM(?rain_day) AS ?rain_mm)
+          WHERE {
+            SELECT ?locationUri ?rain_date (MAX(xsd:double(?precip)) - MIN(xsd:double(?precip)) AS ?rain_day)
+            WHERE {
+              SERVICE <rusalka://local/oberek-metadata> {
+                ?rain_sensor saref:observes ?locationUri .
+                ?locationUri a saref:FeatureOfInterest .
+              }
+              ?rain_sensor saref:madeExecution ?rain_obs .
+              ?rain_obs saref:hasResult ?rain_r ;
+                        saref:hasTimestamp ?rain_ts .
+              ?rain_r saref:isValueOfProperty s4watr:Precipitation ;
+                      saref:hasValue ?precip .
+              BIND(SUBSTR(STR(?rain_ts), 1, 10) AS ?rain_date)
+            }
+            GROUP BY ?locationUri ?rain_date
+          }
+          GROUP BY ?locationUri
+        }
+
+        BIND(xsd:boolean(?is_fav_int = 1) AS ?is_fav_val)
+        BIND(IF(BOUND(?rain_mm), xsd:double(?rain_mm), 0.0) AS ?rain_mm_val)
+        BIND(IRI(CONCAT(STR(?locationUri), "/pri-hourly-obs/", STR(?now_timestamp))) AS ?obs_iri)
+        BIND(IRI(CONCAT(STR(?locationUri), "/pri_favourable_hour/", STR(?now_timestamp))) AS ?fav_result)
+        BIND(IRI(CONCAT(STR(?locationUri), "/pri_rainfall/", STR(?now_timestamp))) AS ?rain_result)
+      }
+    mergeWithOriginalDataset: false
+
+  - type: !template kafka-publish
+    kafkaTopic: "oberek.calculated.pri_hourly"
+
+  - flow: util.log
+    name: pri-hourly-OUT
+    onElement: info
+
+  - flow: error.logAndSkip
+
+  - sink: util.ignoreSink

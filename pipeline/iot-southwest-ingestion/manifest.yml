@@ -1,0 +1,111 @@
+type: pipeline
+steps:
+  - source: mqtt.subscribe
+    host: <MQTT_HOST>
+    port: <MQTT_PORT>
+    topics:
+      - iot/data/south_west
+  - flow: stream.fromSingle
+
+  - flow: rml.liftJson
+    model: iot-water-processing
+  - flow: stream.toRdfDataset
+
+  - flow: error.log
+
+  - flow: sparql.streamGraphQuery
+    query: |
+      CONSTRUCT {
+        ?device a saref:Device ;
+                saref:hasIdentifier ?devId ;
+                saref:consistsOf ?sensor .
+        ?sensor a saref:Sensor ;
+                rdfs:label ?sensorLabel ;
+                saref:madeExecution ?obs .
+        ?obs a saref:Observation ;
+             saref:hasTimestamp ?ts ;
+             saref:observes ?prop ;
+             saref:hasResult ?val .
+        ?val a saref:PropertyValue ;
+             saref:isMeasuredIn ?unit ;
+             saref:hasValue ?v ;
+             saref:isValueOfProperty ?prop .
+      }
+      WHERE {
+        { ?device a saref:Device ; saref:hasIdentifier ?devId ; saref:consistsOf ?sensor . }
+        UNION
+        { ?sensor a saref:Sensor . OPTIONAL { ?sensor rdfs:label ?sensorLabel . } }
+        UNION
+        {
+          ?sensor saref:madeExecution ?obs .
+          ?obs saref:hasTimestamp ?ts ;
+               saref:observes ?prop ;
+               saref:hasResult ?val .
+          ?val saref:hasValue ?v ;
+               saref:isValueOfProperty ?prop .
+          OPTIONAL { ?val saref:isMeasuredIn ?unit . }
+          {
+            SELECT ?sensor ?ts (SUM(?isBad) AS ?badValues)
+            WHERE {
+              ?sensor saref:madeExecution ?rObs .
+              ?rObs saref:hasTimestamp ?ts ;
+                    saref:observes ?rProp ;
+                    saref:hasResult ?rVal .
+              ?rVal saref:hasValue ?rv ;
+                    saref:isValueOfProperty ?rProp .
+              OPTIONAL {
+                SERVICE <rusalka://local/oberek-metadata> {
+                  ?rRange a nb:SensorRange ;
+                          nb:forProperty ?rProp ;
+                          nb:plausibleMin ?rMin ;
+                          nb:plausibleMax ?rMax .
+                }
+              }
+              BIND( IF( !isNumeric(?rv) || ( BOUND(?rMin) && ( ?rv < ?rMin || ?rv > ?rMax ) ), 1, 0 ) AS ?isBad )
+            }
+            GROUP BY ?sensor ?ts
+          }
+          FILTER( ?badValues = 0 )
+        }
+      }
+    mergeWithOriginalDataset: false
+
+  - flow: sparql.streamGraphQuery
+    query: |
+
+      CONSTRUCT {
+        ?sensor rdfs:label ?sensorLabel .
+      }
+      WHERE {
+        ?device a saref:Device ;
+                saref:consistsOf ?sensor .
+
+        SERVICE <rusalka://local/oberek-metadata> {
+          ?sensor rdfs:label ?sensorLabel .
+        }
+      }
+    mergeWithOriginalDataset: true
+
+  - type: !template save-multiple-formats
+    s3Prefix: "raw/iot/southwest/"
+    lowerModel: universal-sensor-export-processing
+    kafkaTopic: "oberek.raw.iot"
+    prefixes:
+      nb: "https://neverblink.eu/ontologies/oberek/"
+      nbi: "https://neverblink.eu/oberek/"
+      saref: "https://saref.etsi.org/core/"
+      xsd: "http://www.w3.org/2001/XMLSchema#"
+      unit: "http://qudt.org/vocab/unit/"
+      s4watr: "https://saref.etsi.org/saref4watr/"
+      s4mari: "https://saref.etsi.org/saref4mari/"
+      qudt_qk: "http://qudt.org/vocab/quantitykind/"
+
+  - type: !template save-to-lmdb
+
+  - flow: util.log
+    onElement: info
+    name: iot-broadcast-SW
+
+  - flow: error.logAndSkip
+
+  - sink: util.ignoreSink

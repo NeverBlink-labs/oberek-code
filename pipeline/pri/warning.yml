@@ -1,0 +1,62 @@
+type: pipeline
+steps:
+  - source: hub.fromBroadcast
+    from: core-kafka-broadcasters/calculated-pri_hourly
+  - flow: time.withSystemTime
+  - flow: time.window
+    windowSize: 11h
+    windowSlide: 1h
+  - flow: rdf.mergeDatasets
+
+  - flow: sparql.streamGraphQuery
+    query: |
+
+      CONSTRUCT {
+        ?obs_iri a saref:Observation ;
+          saref:hasTimestamp ?now_timestamp ;
+          saref:observes ?locationUri, nb:pri_warning ;
+          saref:hasResult ?warn_result .
+
+        ?warn_result a saref:PropertyValue ;
+          saref:isValueOfProperty nb:pri_warning ;
+          saref:hasValue ?is_warning_val .
+      }
+
+      WHERE {
+        { SELECT (MAX(?t) AS ?now_timestamp) WHERE { ?s saref:hasTimestamp ?t . } }
+
+        {
+          SELECT ?locationUri (SUM(IF(xsd:boolean(?is_fav_raw), 1, 0)) AS ?fav_count)
+          WHERE {
+            SERVICE <rusalka://local/oberek-metadata> {
+              nbi:PyriculariaRisk_System saref:consistsOf ?sl .
+              ?sl saref:observes nb:pyricularia_risk_index, ?locationUri .
+              ?locationUri a saref:FeatureOfInterest .
+            }
+
+            ?hourly_obs a saref:Observation ;
+              saref:observes ?locationUri, nb:pri_favourable_hour ;
+              saref:hasResult ?fav_r .
+
+            ?fav_r saref:isValueOfProperty nb:pri_favourable_hour ;
+                   saref:hasValue ?is_fav_raw .
+          }
+          GROUP BY ?locationUri
+        }
+
+        BIND(xsd:boolean(?fav_count = 11) AS ?is_warning_val)
+        BIND(IRI(CONCAT(STR(?locationUri), "/pri-warning-obs/", STR(?now_timestamp))) AS ?obs_iri)
+        BIND(IRI(CONCAT(STR(?locationUri), "/pri_warning/", STR(?now_timestamp))) AS ?warn_result)
+      }
+    mergeWithOriginalDataset: false
+
+  - type: !template kafka-publish
+    kafkaTopic: "oberek.calculated.pri_warning"
+
+  - flow: util.log
+    name: pri-warning-OUT
+    onElement: info
+
+  - flow: error.logAndSkip
+
+  - sink: util.ignoreSink

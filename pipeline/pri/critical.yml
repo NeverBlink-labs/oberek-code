@@ -1,0 +1,188 @@
+type: pipeline
+steps:
+  - type: !template kafka-windowed-subscribe
+    topics:
+      - "oberek.calculated.pri_hourly"
+      - "oberek.calculated.pri_warning"
+    windowSize: 72h
+    windowSlide: 1h
+
+  - flow: sparql.streamGraphQuery
+    query: |
+
+      CONSTRUCT {
+        ?deviceUri a saref:Device ;
+          saref:hasIdentifier ?systemId ;
+          saref:consistsOf ?sensorUri .
+
+        ?sensorUri a saref:Sensor ;
+          rdfs:label ?sensorLabel ;
+          saref:madeExecution ?obs_iri .
+
+        ?obs_iri a saref:Observation ;
+          saref:hasTimestamp ?now_timestamp ;
+          saref:observes ?locationUri, nb:pyricularia_risk_index ;
+          saref:hasResult ?prop_val_pri .
+
+        ?prop_val_pri a saref:PropertyValue ;
+          saref:isValueOfProperty nb:pyricularia_risk_index ;
+          saref:isMeasuredIn unit:UNITLESS ;
+          saref:hasValue ?pri_level .
+      }
+
+      WHERE {
+        { SELECT (MAX(?t) AS ?now_timestamp) WHERE { ?s saref:hasTimestamp ?t . } }
+
+        BIND("PyriculariaRisk_System" AS ?systemId)
+
+        SERVICE <rusalka://local/oberek-metadata> {
+          ?deviceUri a saref:Device ;
+                     saref:hasIdentifier ?systemId ;
+                     saref:consistsOf ?sensorUri .
+          ?sensorUri a saref:Sensor ;
+                     saref:observes nb:pyricularia_risk_index, ?locationUri .
+          ?locationUri a saref:FeatureOfInterest ;
+                       geo:hasBoundingBox ?bbox .
+          ?bbox a geo:Geometry ;
+                geo:asWKT ?wkt .
+          OPTIONAL { ?sensorUri rdfs:label ?sensorLabel . FILTER(lang(?sensorLabel) = "en") }
+        }
+
+        {
+          SELECT ?locationUri
+            (SUM(IF(xsd:boolean(?is_fav_raw), 1, 0)) AS ?fav_count_72h)
+            (SUM(IF(
+              BOUND(?rain_mm_raw) && ?hourly_ts = ?loc_max_ts,
+              xsd:double(?rain_mm_raw), 0.0)) AS ?rain_this_hour)
+            (SUM(IF(
+              BOUND(?rain_mm_raw) &&
+              ?hourly_ts >= ?loc_max_ts - "PT12H"^^xsd:dayTimeDuration &&
+              ?hourly_ts < ?loc_max_ts,
+              xsd:double(?rain_mm_raw), 0.0)) AS ?rain_prev_12h)
+          WHERE {
+            SERVICE <rusalka://local/oberek-metadata> {
+              nbi:PyriculariaRisk_System saref:consistsOf ?sl1 .
+              ?sl1 saref:observes nb:pyricularia_risk_index, ?locationUri .
+              ?locationUri a saref:FeatureOfInterest .
+            }
+
+            { SELECT ?locationUri (MAX(?ts2) AS ?loc_max_ts)
+              WHERE {
+                SERVICE <rusalka://local/oberek-metadata> {
+                  nbi:PyriculariaRisk_System saref:consistsOf ?sl2 .
+                  ?sl2 saref:observes nb:pyricularia_risk_index, ?locationUri .
+                  ?locationUri a saref:FeatureOfInterest .
+                }
+                ?obs_h2 saref:observes ?locationUri, nb:pri_favourable_hour ;
+                        saref:hasTimestamp ?ts2 .
+              }
+              GROUP BY ?locationUri
+            }
+
+            ?hourly_obs saref:observes ?locationUri, nb:pri_favourable_hour ;
+                        saref:hasTimestamp ?hourly_ts ;
+                        saref:hasResult ?fav_r .
+            ?fav_r saref:isValueOfProperty nb:pri_favourable_hour ;
+                   saref:hasValue ?is_fav_raw .
+
+            OPTIONAL {
+              ?hourly_obs saref:hasResult ?rain_r .
+              ?rain_r saref:isValueOfProperty nb:pri_rainfall ;
+                      saref:hasValue ?rain_mm_raw .
+            }
+          }
+          GROUP BY ?locationUri
+        }
+
+        OPTIONAL {
+          { SELECT ?locationUri (MAX(IF(xsd:boolean(?latest_warn_val), 1, 0)) AS ?has_current_warning_int)
+            WHERE {
+              { SELECT ?locationUri (MAX(?warn_ts2) AS ?latest_warn_ts)
+                WHERE {
+                  SERVICE <rusalka://local/oberek-metadata> {
+                    nbi:PyriculariaRisk_System saref:consistsOf ?sl3 .
+                    ?sl3 saref:observes nb:pyricularia_risk_index, ?locationUri .
+                    ?locationUri a saref:FeatureOfInterest .
+                  }
+                  ?wo_ts saref:observes ?locationUri, nb:pri_warning ;
+                         saref:hasTimestamp ?warn_ts2 .
+                }
+                GROUP BY ?locationUri
+              }
+              ?wo_cur saref:observes ?locationUri, nb:pri_warning ;
+                      saref:hasTimestamp ?latest_warn_ts ;
+                      saref:hasResult ?wr_cur .
+              ?wr_cur saref:isValueOfProperty nb:pri_warning ;
+                      saref:hasValue ?latest_warn_val .
+            }
+            GROUP BY ?locationUri
+          }
+        }
+
+        OPTIONAL {
+          { SELECT ?locationUri (COUNT(*) AS ?consec_day_pairs)
+            WHERE {
+              SERVICE <rusalka://local/oberek-metadata> {
+                nbi:PyriculariaRisk_System saref:consistsOf ?sl4 .
+                ?sl4 saref:observes nb:pyricularia_risk_index, ?locationUri .
+                ?locationUri a saref:FeatureOfInterest .
+              }
+              ?wo_d1 saref:observes ?locationUri, nb:pri_warning ;
+                     saref:hasTimestamp ?warn_ts_d1 ;
+                     saref:hasResult ?wr_d1 .
+              ?wr_d1 saref:isValueOfProperty nb:pri_warning ;
+                     saref:hasValue ?warn_val_d1 .
+              FILTER(xsd:boolean(?warn_val_d1))
+              BIND(xsd:date(?warn_ts_d1) AS ?day1)
+
+              ?wo_d2 saref:observes ?locationUri, nb:pri_warning ;
+                     saref:hasTimestamp ?warn_ts_d2 ;
+                     saref:hasResult ?wr_d2 .
+              ?wr_d2 saref:isValueOfProperty nb:pri_warning ;
+                     saref:hasValue ?warn_val_d2 .
+              FILTER(xsd:boolean(?warn_val_d2))
+              BIND(xsd:date(?warn_ts_d2) AS ?day2)
+
+              FILTER(?day2 = ?day1 + "P1D"^^xsd:dayTimeDuration)
+            }
+            GROUP BY ?locationUri
+          }
+        }
+
+        BIND(IF(BOUND(?has_current_warning_int), ?has_current_warning_int = 1, false) AS ?is_current_warning)
+        BIND(IF(BOUND(?consec_day_pairs), ?consec_day_pairs >= 1, false) AS ?crit_two_days)
+        BIND(?fav_count_72h > 20 AS ?crit_by_count)
+        BIND(?is_current_warning && (?rain_this_hour >= 1.0 || ?rain_prev_12h >= 1.0) AS ?crit_by_rain)
+
+        BIND(xsd:float(
+          IF(?crit_by_count || ?crit_by_rain || ?crit_two_days, 2,
+          IF(?is_current_warning, 1, 0))
+        ) AS ?pri_level)
+
+        BIND(IRI(CONCAT(STR(?locationUri), "/pri-obs/", STR(?now_timestamp))) AS ?obs_iri)
+        BIND(IRI(CONCAT(STR(?locationUri), "/pyricularia_risk_index/", STR(?now_timestamp))) AS ?prop_val_pri)
+      }
+    mergeWithOriginalDataset: false
+
+  - flow: util.log
+    name: pri-critical-OUT
+    onElement: info
+
+  - type: !template save-multiple-formats
+    s3Prefix: "keis/pyricularia-risk-index/"
+    lowerModel: universal-sensor-export-processing
+    kafkaTopic: "oberek.calculated.pri"
+    prefixes:
+      nb: "https://neverblink.eu/ontologies/oberek/"
+      nbi: "https://neverblink.eu/oberek/"
+      saref: "https://saref.etsi.org/core/"
+      geo: "http://www.opengis.net/ont/geosparql#"
+      unit: "http://qudt.org/vocab/unit/"
+      rdfs: "http://www.w3.org/2000/01/rdf-schema#"
+      xsd: "http://www.w3.org/2001/XMLSchema#"
+
+  - type: !template save-to-lmdb
+
+  - flow: error.logAndSkip
+
+  - sink: util.ignoreSink

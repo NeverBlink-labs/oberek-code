@@ -1,0 +1,111 @@
+type: pipeline
+steps:
+  - source: util.tickStringSource
+    string: "<CHJ_GAUGING_STATIONS_ZIP_URL>"
+    interval: 12h
+
+  - flow: file.read
+  - flow: error.divertTo
+    to:
+      - flow: error.getMessage
+      - sink: util.logSink
+        onElement: error
+        name: err-sink-clean
+
+  - flow: bytes.collectStream
+  - flow: stream.fromSingle
+
+  - flow: zip.extractFile
+    path: "F56_D7_Serie día.xlsx"
+
+  - flow: xlsx.openFile
+
+  - flow: error.log
+
+  - flow: jsonnet.transform
+    inType: Xlsx
+    outType: List[Statement]
+    model: water-flow-processing
+
+  - flow: error.log
+
+  - flow: cast
+    from: List[Statement]
+    to: RdfDataset
+
+  - flow: util.dropRepeated
+
+  - flow: sparql.streamGraphQuery
+    query: |
+
+      CONSTRUCT {
+        ?station a saref:Device ;
+                 saref:hasIdentifier ?stationId ;
+                 saref:consistsOf ?meter .
+
+        ?meter a s4watr:WaterMeter ;
+               rdfs:label ?meterLabel ;
+               saref:madeExecution ?obs .
+
+        ?obs a saref:Observation ;
+             saref:hasTimestamp ?iso_date ;
+             saref:observes ?property ;
+             saref:hasResult ?res .
+
+        ?res a saref:PropertyValue ;
+             saref:isValueOfProperty ?property ;
+             saref:isMeasuredIn ?final_unit ;
+             saref:hasValue ?final_val .
+      }
+      WHERE {
+        SERVICE <rusalka://local/oberek-metadata> {
+          ?station a saref:Device ;
+                   saref:hasIdentifier ?stationId ;
+                   saref:consistsOf ?meter .
+          ?meter a s4watr:WaterMeter ;
+                 rdfs:label ?meterLabel .
+        }
+
+        ?meter saref:madeExecution ?obs .
+
+        ?obs a saref:Observation ;
+             saref:hasTimestamp ?raw_date ;
+             saref:observes ?property ;
+             saref:hasResult ?res .
+
+        ?res a saref:PropertyValue ;
+             saref:isValueOfProperty ?property .
+
+        OPTIONAL { ?res saref:hasValue ?raw_val . }
+        OPTIONAL { ?res saref:isMeasuredIn ?raw_unit . }
+
+        BIND(STR(?raw_date) AS ?dateStr)
+        BIND(xsd:dateTime(CONCAT(SUBSTR(?dateStr, 1, 10), "T00:00:00Z")) AS ?iso_date)
+
+        BIND(IF(?property = s4watr:FlowVolume, xsd:float(?raw_val) * 1000000.0, xsd:float(?raw_val)) AS ?final_val)
+
+        BIND(IF(?property = s4watr:FlowVolume, unit:M3, ?raw_unit) AS ?final_unit)
+      }
+    mergeWithOriginalDataset: false
+
+  - type: !template save-multiple-formats
+    s3Prefix: "raw/csv-water/"
+    lowerModel: universal-sensor-export-processing
+    kafkaTopic: "oberek.raw.csv"
+    prefixes:
+      nb: "https://neverblink.eu/ontologies/oberek/"
+      nbi: "https://neverblink.eu/oberek/"
+      saref: "https://saref.etsi.org/core/"
+      s4watr: "https://saref.etsi.org/saref4watr/"
+      xsd: "http://www.w3.org/2001/XMLSchema#"
+      wmdr_terr: "http://codes.wmo.int/wmdr/ObservedVariableTerrestrial/"
+      unit: "http://qudt.org/vocab/unit/"
+      rdfs: "http://www.w3.org/2000/01/rdf-schema#"
+
+  - type: !template save-to-lmdb
+
+  - flow: util.log
+    onElement: info
+    name: csv-broadcast
+  - flow: error.logAndSkip
+  - sink: util.ignoreSink

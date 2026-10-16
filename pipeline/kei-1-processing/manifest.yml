@@ -1,0 +1,264 @@
+type: pipeline
+steps:
+  - type: !template kafka-windowed-subscribe
+    topics:
+      - "oberek.raw.iot"
+      - "oberek.raw.copernicus"
+    windowSize: 1h
+    windowSlide: 15m
+
+  - flow: util.log
+    name: kei1-IN
+    onElement: info
+    onPipelineError: error
+    onPipelineFinish: warn
+
+  - flow: sparql.streamGraphQuery
+    query: |
+
+        CONSTRUCT {
+          ?deviceUri a saref:Device ;
+            saref:hasIdentifier ?systemId ;
+            saref:consistsOf ?sensorUri .
+
+          ?sensorUri a saref:Sensor ;
+            rdfs:label ?sensorLabel ;
+            saref:madeExecution ?obs_iri .
+
+          ?obs_iri a saref:Observation ;
+            saref:hasTimestamp ?now_timestamp ;
+            saref:observes ?locationUri, nb:KEI-1, nb:KEI-1_RAW, nb:KEI-1_NMeasured, nb:KEI-1_NFail, nb:KEI-1_NCrit ;
+            saref:hasResult ?prop_val_final_level,
+                            ?prop_val_raw,
+                            ?prop_val_nmeasured,
+                            ?prop_val_nfail,
+                            ?prop_val_ncrit.
+
+          ?locationUri a saref:FeatureOfInterest ;
+            geo:hasBoundingBox ?bbox .
+
+          ?bbox a geo:Geometry ;
+            geo:asWKT ?wkt .
+
+          ?prop_val_final_level a saref:PropertyValue ;
+            saref:isValueOfProperty nb:KEI-1 ;
+            saref:isMeasuredIn unit:UNITLESS ;
+            saref:hasValue ?final_level_typed .
+
+          ?prop_val_raw a saref:PropertyValue ;
+            saref:isValueOfProperty nb:KEI-1_RAW ;
+            saref:isMeasuredIn unit:UNITLESS ;
+            saref:hasValue ?kei_raw_typed .
+
+          ?prop_val_nmeasured a saref:PropertyValue ;
+            saref:isValueOfProperty nb:KEI-1_NMeasured ;
+            saref:isMeasuredIn unit:UNITLESS ;
+            saref:hasValue ?nmeasured_typed .
+
+          ?prop_val_nfail a saref:PropertyValue ;
+            saref:isValueOfProperty nb:KEI-1_NFail ;
+            saref:isMeasuredIn unit:UNITLESS ;
+            saref:hasValue ?nfail_typed .
+
+          ?prop_val_ncrit a saref:PropertyValue ;
+            saref:isValueOfProperty nb:KEI-1_NCrit ;
+            saref:isMeasuredIn unit:UNITLESS ;
+            saref:hasValue ?ncrit_typed .
+
+        }
+        WHERE {
+          { SELECT (MAX(?t) AS ?now_timestamp) WHERE { ?s saref:hasTimestamp ?t . } }
+
+          {
+            SELECT
+              ?location_name ?locationUri
+              (COUNT(?directed_diff) AS ?nmeasured)
+              (SUM(IF(?directed_diff >= ?warningThreshold / 100.0, 1.0, 0.0)) AS ?nfail)
+              (SUM(IF(?directed_diff > ?criticalThreshold / 100.0, 1.0, 0.0)) AS ?ncrit)
+              (AVG(?directed_diff) AS ?mean_diff)
+            WHERE {
+
+              SELECT
+                ?location_name ?locationUri ?property ?warningThreshold ?criticalThreshold
+                (AVG(?directed_diff_raw) AS ?directed_diff)
+              WHERE {
+
+              {
+                VALUES (?location_name ?loc_label) {
+                  ("North" "North"@en)
+                  ("South" "South"@en)
+                  ("SouthWest" "South-West"@en)
+                  ("Global" "Global — l'Albufera"@en)
+                }
+
+                SERVICE <rusalka://local/oberek-metadata> {
+                  ?locationUri a saref:FeatureOfInterest ;
+                               rdfs:label ?loc_label .
+                }
+
+                VALUES (?property ?statType) {
+                  ( nb:chlorophyll       sst:66851a3 )
+                  ( nb:secchiDiskDepth   sst:66851a3 )
+                  ( nb:phycocyanin       sst:66851a3 )
+                }
+
+                ?sensor saref:madeExecution ?observation .
+                ?observation saref:observes ?property, ?locationUri ;
+                             saref:hasResult ?statNode .
+
+                ?statNode disco:statisticsVariable ?property ;
+                          disco:summaryStatisticType ?statType ;
+                          saref:hasValue ?actualValue .
+
+                SERVICE <rusalka://local/oberek-metadata> {
+                  ?_bl a nb:PropertyBaseline ;
+                       nb:forProperty ?property ;
+                       nb:baselineValue ?baseline ;
+                       nb:warningThreshold ?warningThreshold ;
+                       nb:criticalThreshold ?criticalThreshold ;
+                       nb:bidirectional ?bidirectional .
+                  OPTIONAL { ?_bl nb:deviationDirection ?deviationDirection . }
+                }
+
+                BIND((xsd:double(?actualValue) - xsd:double(?baseline)) / (xsd:double(?baseline) + 1E-06) AS ?diff)
+                BIND(IF(BOUND(?bidirectional) && ?bidirectional, ABS(?diff),
+                     IF(BOUND(?deviationDirection) && ?deviationDirection = nb:Above, IF(?diff > 0.0, ?diff, 0.0),
+                                                        IF(?diff < 0.0, -?diff, 0.0))) AS ?directed_diff_raw)
+              }
+              UNION
+              {
+                VALUES (?location_name ?loc_label) {
+                  ("North" "North"@en)
+                  ("South" "South"@en)
+                  ("SouthWest" "South-West"@en)
+                  ("Global" "Global — l'Albufera"@en)
+                }
+
+                SERVICE <rusalka://local/oberek-metadata> {
+                  ?locationUri a saref:FeatureOfInterest ;
+                               rdfs:label ?loc_label .
+                }
+
+                { SELECT ?sensor ?property (AVG(xsd:double(?v_i)) AS ?actualValue) WHERE {
+                    VALUES (?property) {
+                      ( bufr4_b13:083            )
+                      ( s4watr:Turbidity         )
+                      ( s4mari:WaterConductivity  )
+                      ( qudt_qk:Acidity          )
+                      ( s4mari:WaterTemperature   )
+                      ( s4mari:Salinity           )
+                    }
+                    ?sensor saref:madeExecution ?o_i .
+                    ?o_i saref:hasResult ?r_i .
+                    ?r_i a saref:PropertyValue ;
+                         saref:isValueOfProperty ?property ;
+                         saref:hasValue ?v_i .
+                  } GROUP BY ?sensor ?property }
+
+                BIND(STR(?sensor) AS ?sensor_str)
+
+                FILTER(
+                  (?location_name = "North" && CONTAINS(?sensor_str, "Estacion_North")) ||
+                  (?location_name = "South" && CONTAINS(?sensor_str, "Estacion_South") && !CONTAINS(?sensor_str, "Estacion_SouthWest")) ||
+                  (?location_name = "SouthWest" && CONTAINS(?sensor_str, "Estacion_SouthWest")) ||
+                  (?location_name = "Global" && (CONTAINS(?sensor_str, "Estacion_North") || CONTAINS(?sensor_str, "Estacion_South") || CONTAINS(?sensor_str, "Estacion_SouthWest")))
+                )
+
+                SERVICE <rusalka://local/oberek-metadata> {
+                  ?_bl a nb:PropertyBaseline ;
+                       nb:forProperty ?property ;
+                       nb:baselineValue ?baseline ;
+                       nb:warningThreshold ?warningThreshold ;
+                       nb:criticalThreshold ?criticalThreshold ;
+                       nb:bidirectional ?bidirectional .
+                  OPTIONAL { ?_bl nb:deviationDirection ?deviationDirection . }
+                }
+
+                BIND((xsd:double(?actualValue) - xsd:double(?baseline)) / (xsd:double(?baseline) + 1E-06) AS ?diff)
+                BIND(IF(BOUND(?bidirectional) && ?bidirectional, ABS(?diff),
+                     IF(BOUND(?deviationDirection) && ?deviationDirection = nb:Above, IF(?diff > 0.0, ?diff, 0.0),
+                                                        IF(?diff < 0.0, -?diff, 0.0))) AS ?directed_diff_raw)
+              }
+              }
+              GROUP BY ?location_name ?locationUri ?property ?warningThreshold ?criticalThreshold
+            }
+            GROUP BY ?location_name ?locationUri
+          }
+
+          BIND((?nfail / (xsd:float(?nmeasured) + 1E-06)) AS ?rfail)
+          BIND((?ncrit / (xsd:float(?nmeasured) + 1E-06)) AS ?rcrit)
+
+          BIND(
+            IF(?rfail = 0, 1,
+            IF(?rfail <= 0.20, 2,
+            IF(?rfail <= 0.40, 3,
+            IF(?rfail <= 0.60, 4, 5))))
+          AS ?base_level)
+
+          BIND(
+            IF(?ncrit >= 2 && ?rcrit >= 0.40, 2,
+            IF(?ncrit >= 1 && ?rcrit >= 0.20, 1, 0))
+          AS ?adjustment)
+
+          BIND(
+            IF(?ncrit >= 3 && ?rcrit >= 0.60, 5,
+            IF(?base_level + ?adjustment > 5, 5, ?base_level + ?adjustment))
+          AS ?final_level)
+
+          BIND(xsd:float(IF(?mean_diff >= 1.0, 0.0, 100.0 * (1.0 - ?mean_diff))) AS ?kei_raw_typed)
+          BIND(xsd:float(6 - ?final_level) AS ?final_level_typed)
+          BIND(xsd:float(?nmeasured)   AS ?nmeasured_typed)
+          BIND(xsd:float(?nfail)       AS ?nfail_typed)
+          BIND(xsd:float(?ncrit)       AS ?ncrit_typed)
+
+          BIND(IRI(CONCAT(STR(?locationUri), "/kei1-obs/", STR(?now_timestamp))) AS ?obs_iri)
+
+          BIND(IF(?nmeasured > 0, IRI(CONCAT(STR(?locationUri), "/KEI-1/", STR(?now_timestamp))), ?__noData) AS ?prop_val_final_level)
+          BIND(IF(?nmeasured > 0, IRI(CONCAT(STR(?locationUri), "/KEI-1_RAW/", STR(?now_timestamp))), ?__noData) AS ?prop_val_raw)
+          BIND(IRI(CONCAT(STR(?locationUri), "/KEI-1_NMeasured/", STR(?now_timestamp))) AS ?prop_val_nmeasured)
+          BIND(IRI(CONCAT(STR(?locationUri), "/KEI-1_NFail/", STR(?now_timestamp))) AS ?prop_val_nfail)
+          BIND(IRI(CONCAT(STR(?locationUri), "/KEI-1_NCrit/", STR(?now_timestamp))) AS ?prop_val_ncrit)
+
+          BIND("KEI_System" AS ?systemId)
+          SERVICE <rusalka://local/oberek-metadata> {
+
+            ?deviceUri a saref:Device ;
+                       saref:hasIdentifier ?systemId ;
+                       saref:consistsOf ?sensorUri .
+
+            ?sensorUri a saref:Sensor ;
+                       rdfs:label ?sensorLabel ;
+                       saref:observes nb:KEI-1, ?locationUri .
+
+            ?locationUri geo:hasBoundingBox ?bbox .
+
+            ?bbox a geo:Geometry ;
+                  geo:asWKT ?wkt .
+          }
+        }
+    mergeWithOriginalDataset: false
+
+  - flow: util.log
+    name: kei1-OUT
+    onElement: info
+    onPipelineError: error
+    onPipelineFinish: warn
+
+  - type: !template save-multiple-formats
+    s3Prefix: "keis/kei-1/"
+    lowerModel: universal-sensor-export-processing
+    kafkaTopic: "oberek.calculated.kei1"
+    prefixes:
+      nb: "https://neverblink.eu/ontologies/oberek/"
+      nbi: "https://neverblink.eu/oberek/"
+      saref: "https://saref.etsi.org/core/"
+      geo: "http://www.opengis.net/ont/geosparql#"
+      unit: "http://qudt.org/vocab/unit/"
+      rdfs: "http://www.w3.org/2000/01/rdf-schema#"
+      xsd: "http://www.w3.org/2001/XMLSchema#"
+
+  - type: !template save-to-lmdb
+
+  - flow: error.logAndSkip
+
+  - sink: util.ignoreSink

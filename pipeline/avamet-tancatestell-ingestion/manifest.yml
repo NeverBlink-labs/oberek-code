@@ -1,0 +1,190 @@
+type: pipeline
+steps:
+  - source: util.tickStringSource
+    string: "tick"
+    interval: 2.5m
+  - flow: http.assembleBodylessRequest
+    uri: "<ESTELL_STATION_URL>"
+    method: get
+  - flow: http.client
+  - flow: http.extractBodyFromResponse
+
+  - flow: bytes.collectStream
+  - flow: util.dropRepeated
+  - flow: bytes.toString
+  - flow: util.log
+    name: avamet-estell-fetched
+    onElement: info
+    onPipelineError: error
+    onPipelineFinish: warn
+  - flow: jsonnet.transform
+    inType: String
+    outType: List[Statement]
+    model: avamet-data-processing
+  - flow: error.divertTo
+    to:
+      - flow: error.getMessage
+      - sink: util.logSink
+        onElement: error
+        name: err-sink-clean
+
+  - flow: cast
+    from: List[Statement]
+    to: RdfDataset
+  - flow: sparql.streamGraphQuery
+    query: |
+      CONSTRUCT {
+        ?stationDevice a saref:Device ;
+          saref:hasIdentifier ?stationId ;
+          saref:consistsOf ?sensorUri .
+
+        ?sensorUri a saref:Sensor ;
+          rdfs:label ?sensorLabel ;
+          saref:madeExecution ?obs .
+
+        ?obs a saref:Observation;
+          saref:hasTimestamp ?validDateTime ;
+          saref:observes s4watr:ExternalTemperature, s4watr:Humidity, s4watr:Precipitation, s4watr:AtmosphericPressure, wmo:windSpeed, wmo:windDirection, bufr4_b13:031, nb:hoja, nb:hoja_min, nb:hoja_max, nb:hoja_h, nb:hoja_h24, wmdr:573 ;
+          saref:hasResult ?resTemp, ?resHrel, ?resRad, ?resPrec, ?resPres, ?resVent, ?resDir, ?resEto, ?resHoja, ?resHojaMin, ?resHojaMax, ?resHojaH, ?resHojaH24 .
+
+        ?resTemp a saref:PropertyValue ; saref:isValueOfProperty s4watr:ExternalTemperature ; saref:isMeasuredIn unit:DEG_C; saref:hasValue ?temp .
+        ?resHrel a saref:PropertyValue ; saref:isValueOfProperty s4watr:Humidity; saref:isMeasuredIn unit:PERCENT ; saref:hasValue ?hrel .
+        ?resPrec a saref:PropertyValue ; saref:isValueOfProperty s4watr:Precipitation; saref:isMeasuredIn unit:MilliM ; saref:hasValue ?prec .
+        ?resPres a saref:PropertyValue ; saref:isValueOfProperty s4watr:AtmosphericPressure; saref:isMeasuredIn unit:HectoPA ; saref:hasValue ?pres .
+        ?resVent a saref:PropertyValue ; saref:isValueOfProperty wmo:windSpeed; saref:isMeasuredIn unit:M-PER-SEC ; saref:hasValue ?vent .
+        ?resDir a saref:PropertyValue ; saref:isValueOfProperty wmo:windDirection; saref:isMeasuredIn unit:DEG ; saref:hasValue ?vent_dir .
+
+        ?resRad a saref:PropertyValue ; saref:isValueOfProperty wmdr:573; saref:isMeasuredIn unit:W-PER-M2 ; saref:hasValue ?rad .
+        ?resEto a saref:PropertyValue ; saref:isValueOfProperty bufr4_b13:031; saref:isMeasuredIn unit:MilliM ; saref:hasValue ?eto .
+        ?resHoja a saref:PropertyValue ; saref:isValueOfProperty nb:hoja; saref:isMeasuredIn unit:NUM; saref:hasValue ?hoja .
+        ?resHojaMin a saref:PropertyValue ; saref:isValueOfProperty nb:hoja_min; saref:isMeasuredIn unit:NUM; saref:hasValue ?hoja_min .
+        ?resHojaMax a saref:PropertyValue ; saref:isValueOfProperty nb:hoja_max; saref:isMeasuredIn unit:NUM; saref:hasValue ?hoja_max .
+        ?resHojaH a saref:PropertyValue ; saref:isValueOfProperty nb:hoja_h; saref:isMeasuredIn unit:HR; saref:hasValue ?hoja_h .
+        ?resHojaH24 a saref:PropertyValue ; saref:isValueOfProperty nb:hoja_h24; saref:isMeasuredIn unit:HR; saref:hasValue ?hoja_h24 .
+      }
+
+      WHERE {
+        nb:esta saref:hasValue ?station_str .
+        BIND (STR(?station_str) AS ?stationId)
+
+        nb:data saref:hasValue ?timestampStr .
+        BIND(
+          CONCAT(
+            "20", SUBSTR(?timestampStr, 7, 2), "-",
+            SUBSTR(?timestampStr, 4, 2), "-",
+            SUBSTR(?timestampStr, 1, 2), "T",
+            REPLACE(SUBSTR(?timestampStr, 10, 5), " ", "0"), ":00"
+          ) AS ?localTimeStr
+        )
+        # Source time is local (UTC+1, UTC+2 from last Sunday of March to last Sunday of October); converted to UTC.
+        # Last-Sunday formula is valid for 1900-2099.
+        BIND(xsd:integer(SUBSTR(?localTimeStr, 1, 4)) AS ?year)
+        BIND(FLOOR(5 * ?year / 4) AS ?k)
+        BIND(xsd:integer(31 - ((?k + 4) - 7 * FLOOR((?k + 4) / 7))) AS ?marchSunday)
+        BIND(xsd:integer(31 - ((?k + 1) - 7 * FLOOR((?k + 1) / 7))) AS ?octoberSunday)
+        BIND(?localTimeStr >= CONCAT(STR(?year), "-03-", STR(?marchSunday), "T02:00:00") &&
+             ?localTimeStr <  CONCAT(STR(?year), "-10-", STR(?octoberSunday), "T02:00:00") AS ?isSummerTime)
+        BIND(STRDT(CONCAT(?localTimeStr, "Z"), xsd:dateTime)
+             - IF(?isSummerTime, "PT2H"^^xsd:dayTimeDuration, "PT1H"^^xsd:dayTimeDuration) AS ?validDateTime)
+
+        nb:temp saref:hasValue ?temp_str .
+        BIND(IF(REGEX(?temp_str, "^-?[0-9.]+$"), STRDT(?temp_str, xsd:float), ?_skip) AS ?temp)
+        BIND(IRI(CONCAT("https://neverblink.eu/oberek/", ?stationId, "/obs/", STR(?validDateTime))) AS ?obs)
+        BIND(IRI(CONCAT("https://neverblink.eu/oberek/", ?stationId, "/ExternalTemperature/", STR(?validDateTime))) AS ?resTemp)
+
+        nb:hrel saref:hasValue ?hrel_str .
+        BIND(IF(REGEX(?hrel_str, "^-?[0-9.]+$"), STRDT(?hrel_str, xsd:float), ?_skip) AS ?hrel)
+        BIND(IRI(CONCAT("https://neverblink.eu/oberek/", ?stationId, "/Humidity/", STR(?validDateTime))) AS ?resHrel)
+
+        nb:pres saref:hasValue ?pres_str .
+        BIND(IF(REGEX(?pres_str, "^-?[0-9.]+$"), STRDT(?pres_str, xsd:float), ?_skip) AS ?pres)
+        BIND(IRI(CONCAT("https://neverblink.eu/oberek/", ?stationId, "/AtmosphericPressure/", STR(?validDateTime))) AS ?resPres)
+
+        nb:vent saref:hasValue ?vent_str .
+        BIND(IF(REGEX(?vent_str, "^-?[0-9.]+$"), xsd:float(xsd:double(?vent_str) / 3.6), ?_skip) AS ?vent)
+        BIND(IRI(CONCAT("https://neverblink.eu/oberek/", ?stationId, "/windSpeed/", STR(?validDateTime))) AS ?resVent)
+
+        nb:vent_dir saref:hasValue ?vent_dir_str .
+        BIND(IF(REGEX(?vent_dir_str, "^-?[0-9.]+$"), STRDT(?vent_dir_str, xsd:float), ?_skip) AS ?vent_dir)
+        BIND(IRI(CONCAT("https://neverblink.eu/oberek/", ?stationId, "/windDirection/", STR(?validDateTime))) AS ?resDir)
+
+        nb:prec saref:hasValue ?prec_str .
+        BIND(IF(REGEX(?prec_str, "^-?[0-9.]+$"), STRDT(?prec_str, xsd:float), ?_skip) AS ?prec)
+        BIND(IRI(CONCAT("https://neverblink.eu/oberek/", ?stationId, "/Precipitation/", STR(?validDateTime))) AS ?resPrec)
+
+        OPTIONAL {
+          nb:et saref:hasValue ?eto_str .
+          BIND(IF(REGEX(?eto_str, "^-?[0-9.]+$"), STRDT(?eto_str, xsd:float), ?_skip) AS ?eto)
+          BIND(IRI(CONCAT("https://neverblink.eu/oberek/", ?stationId, "/eto/", STR(?validDateTime))) AS ?resEto)
+        }
+
+        OPTIONAL {
+          nb:rad saref:hasValue ?rad_str .
+          BIND(IF(REGEX(?rad_str, "^-?[0-9.]+$"), STRDT(?rad_str, xsd:float), ?_skip) AS ?rad)
+          BIND(IRI(CONCAT("https://neverblink.eu/oberek/", ?stationId, "/radiation/", STR(?validDateTime))) AS ?resRad)
+        }
+
+        OPTIONAL {
+          nb:hoja saref:hasValue ?hoja_str .
+          BIND(IF(REGEX(?hoja_str, "^-?[0-9.]+$"), STRDT(?hoja_str, xsd:float), ?_skip) AS ?hoja)
+          BIND(IRI(CONCAT("https://neverblink.eu/oberek/", ?stationId, "/hoja/", STR(?validDateTime))) AS ?resHoja)
+        }
+
+        OPTIONAL {
+          nb:hoja_min saref:hasValue ?hoja_min_str .
+          BIND(IF(REGEX(?hoja_min_str, "^-?[0-9.]+$"), STRDT(?hoja_min_str, xsd:float), ?_skip) AS ?hoja_min)
+          BIND(IRI(CONCAT("https://neverblink.eu/oberek/", ?stationId, "/hoja_min/", STR(?validDateTime))) AS ?resHojaMin)
+        }
+
+        OPTIONAL {
+          nb:hoja_max saref:hasValue ?hoja_max_str .
+          BIND(IF(REGEX(?hoja_max_str, "^-?[0-9.]+$"), STRDT(?hoja_max_str, xsd:float), ?_skip) AS ?hoja_max)
+          BIND(IRI(CONCAT("https://neverblink.eu/oberek/", ?stationId, "/hoja_max/", STR(?validDateTime))) AS ?resHojaMax)
+        }
+
+        OPTIONAL {
+          nb:hoja_h saref:hasValue ?hoja_h_str .
+          BIND(IF(REGEX(?hoja_h_str, "^-?[0-9.]+$"), STRDT(?hoja_h_str, xsd:float), ?_skip) AS ?hoja_h)
+          BIND(IRI(CONCAT("https://neverblink.eu/oberek/", ?stationId, "/hoja_h/", STR(?validDateTime))) AS ?resHojaH)
+        }
+
+        OPTIONAL {
+          nb:hoja_h24 saref:hasValue ?hoja_h24_str .
+          BIND(IF(REGEX(?hoja_h24_str, "^-?[0-9.]+$"), STRDT(?hoja_h24_str, xsd:float), ?_skip) AS ?hoja_h24)
+          BIND(IRI(CONCAT("https://neverblink.eu/oberek/", ?stationId, "/hoja_h24/", STR(?validDateTime))) AS ?resHojaH24)
+        }
+
+        SERVICE <rusalka://local/oberek-metadata> {
+          ?stationDevice saref:hasIdentifier ?stationId ;
+                        saref:consistsOf ?sensorUri .
+          ?sensorUri rdfs:label ?sensorLabel .
+        }
+      }
+
+    mergeWithOriginalDataset: false
+  - flow: util.log
+    name: avamet-estell-OUT
+    onElement: info
+    onPipelineError: error
+    onPipelineFinish: warn
+
+  - type: !template save-multiple-formats
+    s3Prefix: "raw/avamet/estell/"
+    lowerModel: universal-sensor-export-processing
+    kafkaTopic: "oberek.raw.avamet"
+    prefixes:
+      nb: "https://neverblink.eu/ontologies/oberek/"
+      nbi: "https://neverblink.eu/oberek/"
+      saref: "https://saref.etsi.org/core/"
+      s4watr: "https://saref.etsi.org/saref4watr/"
+      xsd: "http://www.w3.org/2001/XMLSchema#"
+      unit: "http://qudt.org/vocab/unit/"
+      wmo: "http://codes.wmo.int/common/quantity-kind/"
+      wmdr: "http://codes.wmo.int/wmdr/ObservedVariableAtmosphere/"
+      bufr4_b13: "http://codes.wmo.int/bufr4/b/13/"
+
+  - type: !template save-to-lmdb
+
+  - flow: error.logAndSkip
+
+  - sink: util.ignoreSink

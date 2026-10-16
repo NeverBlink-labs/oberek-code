@@ -1,0 +1,411 @@
+type: pipeline
+steps:
+  - type: !template kafka-windowed-subscribe
+    topics:
+      - "oberek.raw.iot"
+      - "oberek.raw.avamet"
+      - "oberek.raw.copernicus"
+      - "oberek.calculated.pri"
+    windowSize: 1h
+    windowSlide: 15m
+
+  - flow: util.log
+    name: kei2-IN
+    onElement: info
+    onPipelineError: error
+    onPipelineFinish: warn
+
+  - flow: sparql.streamGraphQuery
+    query: |
+
+      CONSTRUCT {
+        ?deviceUri a saref:Device ;
+          saref:hasIdentifier ?systemId ;
+          saref:consistsOf ?sensorUri .
+
+        ?sensorUri a saref:Sensor ;
+          rdfs:label ?sensorLabel ;
+          saref:madeExecution ?obs_iri .
+
+        ?obs_iri a saref:Observation ;
+          saref:hasTimestamp ?now_timestamp ;
+          saref:observes ?locationUri, nb:KEI-2, nb:KEI-2-Aquatic, nb:KEI-2-Terrestrial, nb:KEI-2-Aquatic_RAW, nb:KEI-2-Terrestrial_RAW,
+                         nb:KEI-2-Aquatic_NMeasured, nb:KEI-2-Aquatic_NFail, nb:KEI-2-Aquatic_NCrit,
+                         nb:KEI-2-Terrestrial_NMeasured, nb:KEI-2-Terrestrial_NFail, nb:KEI-2-Terrestrial_NCrit ;
+          saref:hasResult ?prop_val_kei2,
+                          ?prop_val_kei2_a,
+                          ?prop_val_kei2_t,
+                          ?prop_val_raw_a,
+                          ?prop_val_raw_t,
+                          ?prop_val_nmeas_a,
+                          ?prop_val_nfail_a,
+                          ?prop_val_ncrit_a,
+                          ?prop_val_nmeas_t,
+                          ?prop_val_nfail_t,
+                          ?prop_val_ncrit_t .
+
+        ?locationUri a saref:FeatureOfInterest ;
+          geo:hasBoundingBox ?bbox .
+
+        ?bbox a geo:Geometry ;
+          geo:asWKT ?wkt .
+
+        ?prop_val_kei2 a saref:PropertyValue ;
+          saref:isValueOfProperty nb:KEI-2 ;
+          saref:isMeasuredIn unit:UNITLESS ;
+          saref:hasValue ?kei2_typed .
+
+        ?prop_val_kei2_a a saref:PropertyValue ;
+          saref:isValueOfProperty nb:KEI-2-Aquatic ;
+          saref:isMeasuredIn unit:UNITLESS ;
+          saref:hasValue ?kei2_a_typed .
+
+        ?prop_val_kei2_t a saref:PropertyValue ;
+          saref:isValueOfProperty nb:KEI-2-Terrestrial ;
+          saref:isMeasuredIn unit:UNITLESS ;
+          saref:hasValue ?kei2_t_typed .
+
+        ?prop_val_raw_a a saref:PropertyValue ;
+          saref:isValueOfProperty nb:KEI-2-Aquatic_RAW ;
+          saref:isMeasuredIn unit:UNITLESS ;
+          saref:hasValue ?raw_a_typed .
+
+        ?prop_val_raw_t a saref:PropertyValue ;
+          saref:isValueOfProperty nb:KEI-2-Terrestrial_RAW ;
+          saref:isMeasuredIn unit:UNITLESS ;
+          saref:hasValue ?raw_t_typed .
+
+        ?prop_val_nmeas_a a saref:PropertyValue ;
+          saref:isValueOfProperty nb:KEI-2-Aquatic_NMeasured ;
+          saref:isMeasuredIn unit:UNITLESS ;
+          saref:hasValue ?nmeas_a_typed .
+
+        ?prop_val_nfail_a a saref:PropertyValue ;
+          saref:isValueOfProperty nb:KEI-2-Aquatic_NFail ;
+          saref:isMeasuredIn unit:UNITLESS ;
+          saref:hasValue ?nfail_a_typed .
+
+        ?prop_val_ncrit_a a saref:PropertyValue ;
+          saref:isValueOfProperty nb:KEI-2-Aquatic_NCrit ;
+          saref:isMeasuredIn unit:UNITLESS ;
+          saref:hasValue ?ncrit_a_typed .
+
+        ?prop_val_nmeas_t a saref:PropertyValue ;
+          saref:isValueOfProperty nb:KEI-2-Terrestrial_NMeasured ;
+          saref:isMeasuredIn unit:UNITLESS ;
+          saref:hasValue ?nmeas_t_typed .
+
+        ?prop_val_nfail_t a saref:PropertyValue ;
+          saref:isValueOfProperty nb:KEI-2-Terrestrial_NFail ;
+          saref:isMeasuredIn unit:UNITLESS ;
+          saref:hasValue ?nfail_t_typed .
+
+        ?prop_val_ncrit_t a saref:PropertyValue ;
+          saref:isValueOfProperty nb:KEI-2-Terrestrial_NCrit ;
+          saref:isMeasuredIn unit:UNITLESS ;
+          saref:hasValue ?ncrit_t_typed .
+      }
+      WHERE {
+        { SELECT (MAX(?t) AS ?now_timestamp) WHERE { ?s saref:hasTimestamp ?t . } }
+
+        {
+          SELECT
+            ?location_name ?locationUri
+
+            (SUM(IF(?category IN ("AQUATIC", "BOTH"), 1.0, 0.0)) AS ?nmeasured_A)
+            (SUM(IF(?category IN ("AQUATIC", "BOTH") && ?directed_diff >= ?warningThreshold / 100.0, 1.0, 0.0)) AS ?nfail_A)
+            (SUM(IF(?category IN ("AQUATIC", "BOTH") && ?directed_diff > ?criticalThreshold / 100.0, 1.0, 0.0)) AS ?ncrit_A)
+            (SUM(IF(?category IN ("AQUATIC", "BOTH"), ?directed_diff, 0.0)) / (SUM(IF(?category IN ("AQUATIC", "BOTH"), 1.0, 0.0)) + 1E-06) AS ?mean_diff_A)
+
+            (SUM(IF(?category IN ("TERRESTRIAL", "BOTH"), 1.0, 0.0)) AS ?nmeasured_T)
+            (SUM(IF(?category IN ("TERRESTRIAL", "BOTH") && ?directed_diff >= ?warningThreshold / 100.0, 1.0, 0.0)) AS ?nfail_T)
+            (SUM(IF(?category IN ("TERRESTRIAL", "BOTH") && ?directed_diff > ?criticalThreshold / 100.0, 1.0, 0.0)) AS ?ncrit_T)
+            (SUM(IF(?category IN ("TERRESTRIAL", "BOTH"), ?directed_diff, 0.0)) / (SUM(IF(?category IN ("TERRESTRIAL", "BOTH"), 1.0, 0.0)) + 1E-06) AS ?mean_diff_T)
+
+          WHERE {
+
+            SELECT
+              ?location_name ?locationUri ?phenomenon ?category ?warningThreshold ?criticalThreshold
+              (AVG(?directed_diff_raw) AS ?directed_diff)
+            WHERE {
+
+            {
+              VALUES (?location_name ?loc_label) {
+              ("North" "North"@en)
+              ("South" "South"@en)
+              ("SouthWest" "South-West"@en)
+              ("Global" "Global — l'Albufera"@en)
+              }
+              SERVICE <rusalka://local/oberek-metadata> {
+                ?locationUri a saref:FeatureOfInterest ;
+                             rdfs:label ?loc_label .
+              }
+
+              VALUES (?phenomenon ?statType ?category) {
+                ( nb:chlorophyll       sst:66851a3    "AQUATIC" )
+                ( nb:secchiDiskDepth   sst:66851a3    "AQUATIC" )
+                ( nb:phycocyanin       sst:66851a3    "AQUATIC" )
+              }
+
+              ?sensor saref:madeExecution ?observation .
+              ?observation saref:observes ?phenomenon, ?locationUri ;
+                           saref:hasResult ?statNode .
+
+              ?statNode disco:statisticsVariable ?phenomenon ;
+                        disco:summaryStatisticType ?statType ;
+                        saref:hasValue ?actualValue .
+
+              SERVICE <rusalka://local/oberek-metadata> {
+                ?_bl a nb:PropertyBaseline ;
+                     nb:forProperty ?phenomenon ;
+                     nb:baselineValue ?baseline ;
+                     nb:warningThreshold ?warningThreshold ;
+                     nb:criticalThreshold ?criticalThreshold ;
+                     nb:bidirectional ?bidirectional .
+                OPTIONAL { ?_bl nb:deviationDirection ?deviationDirection . }
+              }
+
+              BIND((xsd:double(?actualValue) - xsd:double(?baseline)) / (xsd:double(?baseline) + 1E-06) AS ?diff)
+              BIND(IF(BOUND(?bidirectional) && ?bidirectional, ABS(?diff),
+                   IF(BOUND(?deviationDirection) && ?deviationDirection = nb:Above, IF(?diff > 0.0, ?diff, 0.0),
+                                                      IF(?diff < 0.0, -?diff, 0.0))) AS ?directed_diff_raw)
+            }
+            UNION
+            {
+              BIND ("AQUATIC" AS ?category)
+
+              VALUES (?location_name ?loc_label) {
+              ("North" "North"@en)
+              ("South" "South"@en)
+              ("SouthWest" "South-West"@en)
+              ("Global" "Global — l'Albufera"@en)
+              }
+              SERVICE <rusalka://local/oberek-metadata> {
+                ?locationUri a saref:FeatureOfInterest ;
+                             rdfs:label ?loc_label .
+              }
+
+              { SELECT ?sensor ?phenomenon (AVG(xsd:double(?v_i)) AS ?actualValue) WHERE {
+                  VALUES (?phenomenon) {
+                    ( bufr4_b13:083            )
+                    ( s4watr:Turbidity         )
+                    ( s4mari:WaterConductivity  )
+                    ( qudt_qk:Acidity          )
+                    ( s4mari:WaterTemperature   )
+                    ( s4mari:Salinity           )
+                  }
+                  ?sensor saref:madeExecution ?o_i .
+                  ?o_i saref:hasResult ?r_i .
+                  ?r_i a saref:PropertyValue ;
+                       saref:isValueOfProperty ?phenomenon ;
+                       saref:hasValue ?v_i .
+                } GROUP BY ?sensor ?phenomenon }
+
+              BIND(STR(?sensor) AS ?sensor_str)
+
+              FILTER(
+                (?location_name = "North" && CONTAINS(?sensor_str, "Estacion_North")) ||
+                (?location_name = "South" && CONTAINS(?sensor_str, "Estacion_South") && !CONTAINS(?sensor_str, "Estacion_SouthWest")) ||
+                (?location_name = "SouthWest" && CONTAINS(?sensor_str, "Estacion_SouthWest")) ||
+                (?location_name = "Global" && (CONTAINS(?sensor_str, "Estacion_North") || CONTAINS(?sensor_str, "Estacion_South") || CONTAINS(?sensor_str, "Estacion_SouthWest")))
+              )
+
+              SERVICE <rusalka://local/oberek-metadata> {
+                ?_bl a nb:PropertyBaseline ;
+                     nb:forProperty ?phenomenon ;
+                     nb:baselineValue ?baseline ;
+                     nb:warningThreshold ?warningThreshold ;
+                     nb:criticalThreshold ?criticalThreshold ;
+                     nb:bidirectional ?bidirectional .
+                OPTIONAL { ?_bl nb:deviationDirection ?deviationDirection . }
+              }
+
+              BIND((xsd:double(?actualValue) - xsd:double(?baseline)) / (xsd:double(?baseline) + 1E-06) AS ?diff)
+              BIND(IF(BOUND(?bidirectional) && ?bidirectional, ABS(?diff),
+                   IF(BOUND(?deviationDirection) && ?deviationDirection = nb:Above, IF(?diff > 0.0, ?diff, 0.0),
+                                                      IF(?diff < 0.0, -?diff, 0.0))) AS ?directed_diff_raw)
+            }
+            UNION
+            {
+              BIND ("BOTH" AS ?category)
+
+              VALUES (?phenomenon) {
+                ( <http://codes.wmo.int/common/quantity-kind/windSpeed> )
+              }
+
+              ?weather_sensor saref:madeExecution/saref:hasResult ?valNode .
+
+              ?valNode a saref:PropertyValue ;
+                       saref:isValueOfProperty ?phenomenon ;
+                       saref:hasValue ?actualValue .
+
+              SERVICE <rusalka://local/oberek-metadata> {
+                ?weather_sensor saref:observes ?locationUri .
+                VALUES (?location_name ?loc_label_wind) {
+                  ("South" "South"@en)
+                }
+                ?locationUri rdfs:label ?loc_label_wind .
+                ?_bl a nb:PropertyBaseline ;
+                     nb:forProperty ?phenomenon ;
+                     nb:baselineValue ?baseline ;
+                     nb:warningThreshold ?warningThreshold ;
+                     nb:criticalThreshold ?criticalThreshold ;
+                     nb:bidirectional ?bidirectional .
+                OPTIONAL { ?_bl nb:deviationDirection ?deviationDirection . }
+              }
+
+              BIND((xsd:double(?actualValue) - xsd:double(?baseline)) / (xsd:double(?baseline) + 1E-06) AS ?diff)
+              BIND(IF(BOUND(?bidirectional) && ?bidirectional, ABS(?diff),
+                   IF(BOUND(?deviationDirection) && ?deviationDirection = nb:Above, IF(?diff > 0.0, ?diff, 0.0),
+                                                      IF(?diff < 0.0, -?diff, 0.0))) AS ?directed_diff_raw)
+            }
+            UNION
+            {
+              VALUES (?location_name ?loc_label_pri) {
+                ("South" "South"@en)
+              }
+              BIND ("TERRESTRIAL" AS ?category)
+              BIND (nb:pyricularia_risk_index AS ?phenomenon)
+
+              SERVICE <rusalka://local/oberek-metadata> {
+                ?locUri_pri a saref:FeatureOfInterest ;
+                            rdfs:label ?loc_label_pri .
+
+                ?_bl a nb:PropertyBaseline ;
+                     nb:forProperty nb:pyricularia_risk_index ;
+                     nb:baselineValue ?baseline ;
+                     nb:warningThreshold ?warningThreshold ;
+                     nb:criticalThreshold ?criticalThreshold ;
+                     nb:bidirectional ?bidirectional .
+                OPTIONAL { ?_bl nb:deviationDirection ?deviationDirection . }
+              }
+
+              BIND(?locUri_pri AS ?locationUri)
+
+              ?pri_obs saref:observes ?locUri_pri, nb:pyricularia_risk_index ;
+              saref:hasResult ?pri_r .
+              ?pri_r saref:isValueOfProperty nb:pyricularia_risk_index ;
+                     saref:hasValue ?pri_val .
+
+              BIND(xsd:double(?pri_val) / 2.0 AS ?diff)
+
+              BIND(IF(BOUND(?bidirectional) && ?bidirectional, ABS(?diff),
+                   IF(BOUND(?deviationDirection) && ?deviationDirection = nb:Above, IF(?diff > 0.0, ?diff, 0.0),
+                   IF(?diff < 0.0, -?diff, 0.0))) AS ?directed_diff_raw)
+            }
+            }
+            GROUP BY ?location_name ?locationUri ?phenomenon ?category ?warningThreshold ?criticalThreshold
+          }
+          GROUP BY ?location_name ?locationUri
+        }
+
+        BIND((?nfail_A / (xsd:float(?nmeasured_A) + 1E-06)) AS ?rfail_A)
+        BIND((?ncrit_A / (xsd:float(?nmeasured_A) + 1E-06)) AS ?rcrit_A)
+
+        BIND(
+          IF(?rfail_A = 0, 1,
+          IF(?rfail_A <= 0.20, 2,
+          IF(?rfail_A <= 0.40, 3,
+          IF(?rfail_A <= 0.60, 4, 5))))
+        AS ?base_level_A)
+
+        BIND(
+          IF(?ncrit_A >= 2 && ?rcrit_A >= 0.40, 2,
+          IF(?ncrit_A >= 1 && ?rcrit_A >= 0.20, 1, 0))
+        AS ?adj_A)
+
+        BIND(
+          IF(?ncrit_A >= 3 && ?rcrit_A >= 0.60, 5,
+          IF(?base_level_A + ?adj_A > 5, 5, ?base_level_A + ?adj_A))
+        AS ?final_A)
+
+        BIND((?nfail_T / (xsd:float(?nmeasured_T) + 1E-06)) AS ?rfail_T)
+        BIND((?ncrit_T / (xsd:float(?nmeasured_T) + 1E-06)) AS ?rcrit_T)
+
+        BIND(
+          IF(?rfail_T = 0, 1,
+          IF(?rfail_T <= 0.20, 2,
+          IF(?rfail_T <= 0.40, 3,
+          IF(?rfail_T <= 0.60, 4, 5))))
+        AS ?base_level_T)
+
+        BIND(
+          IF(?ncrit_T >= 2 && ?rcrit_T >= 0.40, 2,
+          IF(?ncrit_T >= 1 && ?rcrit_T >= 0.20, 1, 0))
+        AS ?adj_T)
+
+        BIND(
+          IF(?ncrit_T >= 3 && ?rcrit_T >= 0.60, 5,
+          IF(?base_level_T + ?adj_T > 5, 5, ?base_level_T + ?adj_T))
+        AS ?final_T)
+
+        BIND(xsd:float(IF(?mean_diff_A >= 1.0, 0.0, 100.0 * (1.0 - ?mean_diff_A))) AS ?raw_a_typed)
+        BIND(xsd:float(IF(?mean_diff_T >= 1.0, 0.0, 100.0 * (1.0 - ?mean_diff_T))) AS ?raw_t_typed)
+        BIND(xsd:float(6 - ?final_A) AS ?kei2_a_typed)
+        BIND(xsd:float(6 - ?final_T) AS ?kei2_t_typed)
+        BIND(xsd:float(IF(?kei2_a_typed < ?kei2_t_typed, ?kei2_a_typed, ?kei2_t_typed)) AS ?kei2_typed)
+
+        BIND(xsd:float(?nmeasured_A) AS ?nmeas_a_typed)
+        BIND(xsd:float(?nfail_A)     AS ?nfail_a_typed)
+        BIND(xsd:float(?ncrit_A)     AS ?ncrit_a_typed)
+        BIND(xsd:float(?nmeasured_T) AS ?nmeas_t_typed)
+        BIND(xsd:float(?nfail_T)     AS ?nfail_t_typed)
+        BIND(xsd:float(?ncrit_T)     AS ?ncrit_t_typed)
+
+        BIND(IRI(CONCAT(STR(?locationUri), "/kei2-obs/", STR(?now_timestamp))) AS ?obs_iri)
+
+        BIND(IF(?nmeasured_A + ?nmeasured_T > 0, IRI(CONCAT(STR(?locationUri), "/KEI-2/", STR(?now_timestamp))), ?__noData) AS ?prop_val_kei2)
+        BIND(IF(?nmeasured_A > 0, IRI(CONCAT(STR(?locationUri), "/KEI-2-Aquatic/", STR(?now_timestamp))), ?__noData) AS ?prop_val_kei2_a)
+        BIND(IF(?nmeasured_T > 0, IRI(CONCAT(STR(?locationUri), "/KEI-2-Terrestrial/", STR(?now_timestamp))), ?__noData) AS ?prop_val_kei2_t)
+        BIND(IF(?nmeasured_A > 0, IRI(CONCAT(STR(?locationUri), "/KEI-2-Aquatic_RAW/", STR(?now_timestamp))), ?__noData) AS ?prop_val_raw_a)
+        BIND(IF(?nmeasured_T > 0, IRI(CONCAT(STR(?locationUri), "/KEI-2-Terrestrial_RAW/", STR(?now_timestamp))), ?__noData) AS ?prop_val_raw_t)
+        BIND(IRI(CONCAT(STR(?locationUri), "/KEI-2-Aquatic_NMeasured/", STR(?now_timestamp))) AS ?prop_val_nmeas_a)
+        BIND(IRI(CONCAT(STR(?locationUri), "/KEI-2-Aquatic_NFail/", STR(?now_timestamp))) AS ?prop_val_nfail_a)
+        BIND(IRI(CONCAT(STR(?locationUri), "/KEI-2-Aquatic_NCrit/", STR(?now_timestamp))) AS ?prop_val_ncrit_a)
+        BIND(IRI(CONCAT(STR(?locationUri), "/KEI-2-Terrestrial_NMeasured/", STR(?now_timestamp))) AS ?prop_val_nmeas_t)
+        BIND(IRI(CONCAT(STR(?locationUri), "/KEI-2-Terrestrial_NFail/", STR(?now_timestamp))) AS ?prop_val_nfail_t)
+        BIND(IRI(CONCAT(STR(?locationUri), "/KEI-2-Terrestrial_NCrit/", STR(?now_timestamp))) AS ?prop_val_ncrit_t)
+
+        BIND("KEI_System" AS ?systemId)
+
+        SERVICE <rusalka://local/oberek-metadata> {
+          ?deviceUri a saref:Device ;
+                     saref:hasIdentifier ?systemId ;
+                     saref:consistsOf ?sensorUri .
+
+          ?sensorUri a saref:Sensor ;
+                     rdfs:label ?sensorLabel ;
+                     saref:observes nb:KEI-2, ?locationUri .
+
+          ?locationUri geo:hasBoundingBox ?bbox .
+
+          ?bbox a geo:Geometry ;
+                geo:asWKT ?wkt .
+        }
+      }
+    mergeWithOriginalDataset: false
+
+  - flow: util.log
+    name: kei2-OUT
+    onElement: info
+    onPipelineError: error
+    onPipelineFinish: warn
+
+  - type: !template save-multiple-formats
+    s3Prefix: "keis/kei-2/"
+    lowerModel: universal-sensor-export-processing
+    kafkaTopic: "oberek.calculated.kei2"
+    prefixes:
+      nb: "https://neverblink.eu/ontologies/oberek/"
+      nbi: "https://neverblink.eu/oberek/"
+      saref: "https://saref.etsi.org/core/"
+      geo: "http://www.opengis.net/ont/geosparql#"
+      unit: "http://qudt.org/vocab/unit/"
+      rdfs: "http://www.w3.org/2000/01/rdf-schema#"
+      xsd: "http://www.w3.org/2001/XMLSchema#"
+
+  - type: !template save-to-lmdb
+
+  - flow: error.logAndSkip
+
+  - sink: util.ignoreSink

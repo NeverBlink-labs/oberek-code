@@ -1,0 +1,73 @@
+id: https://neverblink.eu/oberek/poll-submission
+name: poll-submission
+description: Schema for lifting a dashboard poll submission
+
+imports:
+  - linkml:types
+
+prefixes:
+  nb: "https://neverblink.eu/ontologies/oberek/"
+  nbi: "https://neverblink.eu/oberek/"
+  saref: "https://saref.etsi.org/core/"
+  linkml: "https://w3id.org/linkml/"
+
+default_prefix: nbi
+default_range: string
+
+classes:
+
+  PollSubmission:
+    class_uri: saref:Observation
+    tree_root: true
+    description: One questionnaire submission
+    slots:
+      - poll_id
+      - timestamp
+      - respondent_category
+      - responses
+
+  Poll:
+    slots:
+      - id
+  RespondentCategory:
+    slots:
+      - id
+
+  RatingAnswer:
+    description: One rating answer
+    slots:
+      - question_id
+      - answer
+
+slots:
+  id:
+    identifier: true
+    range: uriorcurie
+
+  poll_id:
+    slot_uri: nb:forPoll
+    range: Poll
+
+  timestamp:
+    slot_uri: saref:hasTimestamp
+    range: datetime
+
+  respondent_category:
+    slot_uri: nb:categoryAnswer
+    range: RespondentCategory
+
+  responses:
+    slot_uri: nb:ratingAnswer
+    range: RatingAnswer
+    multivalued: true
+    inlined: true
+    inlined_as_list: true
+
+  question_id:
+    slot_uri: nb:answeredQuestion
+    identifier: true
+    range: uriorcurie
+
+  answer:
+    slot_uri: nb:answerValue
+    range: integer

@@ -1,0 +1,119 @@
+type: pipeline
+steps:
+  - type: !template kafka-windowed-subscribe
+    topics:
+      - "oberek.raw.polls"
+      - "oberek.calculated.kei1"
+      - "oberek.calculated.kei2"
+    windowSize: 1h
+    windowSlide: 15m
+
+  - flow: util.log
+    name: kei3-IN
+    onElement: info
+    onPipelineError: error
+    onPipelineFinish: warn
+
+  - flow: sparql.streamGraphQuery
+    query: |
+
+      CONSTRUCT {
+        ?deviceUri a saref:Device ;
+          saref:hasIdentifier ?systemId ;
+          saref:consistsOf ?sensorUri .
+
+        ?sensorUri a saref:Sensor ;
+          rdfs:label ?sensorLabel ;
+          saref:madeExecution ?obs_iri .
+
+        ?obs_iri a saref:Observation ;
+          saref:hasTimestamp ?now ;
+          saref:observes nb:KEI-3 , ?location ;
+          saref:hasResult ?prop_val_kei3 .
+
+        ?prop_val_kei3 a saref:PropertyValue ;
+          saref:isValueOfProperty nb:KEI-3 ;
+          saref:isMeasuredIn unit:UNITLESS ;
+          saref:hasValue ?kei3Level .
+      }
+      WHERE {
+        {
+          SELECT (AVG(?k1v) AS ?avgK1) WHERE {
+            SERVICE <rusalka://local/oberek-history> {
+              ?obs1 saref:hasTimestamp ?t1 ; saref:hasResult ?res1 .
+              ?res1 saref:isValueOfProperty nb:KEI-1 ; saref:hasValue ?k1v .
+              FILTER(?t1 >= NOW() - "P30D"^^xsd:dayTimeDuration)
+            }
+          }
+        }
+        {
+          SELECT (AVG(?k2v) AS ?avgK2) WHERE {
+            SERVICE <rusalka://local/oberek-history> {
+              ?obs2 saref:hasTimestamp ?t2 ; saref:hasResult ?res2 .
+              ?res2 saref:isValueOfProperty nb:KEI-2 ; saref:hasValue ?k2v .
+              FILTER(?t2 >= NOW() - "P30D"^^xsd:dayTimeDuration)
+            }
+          }
+        }
+
+        {
+          SELECT (AVG(?sVal) AS ?avgS) WHERE {
+            SERVICE <rusalka://local/oberek-history> {
+              ?obsS saref:hasTimestamp ?tS ; saref:hasResult ?resS .
+              ?resS saref:isValueOfProperty nb:satisfactionScore ; saref:hasValue ?sVal .
+              FILTER NOT EXISTS { ?resS nb:selectedOption ?selOpt }
+              FILTER(?tS >= NOW() - "P30D"^^xsd:dayTimeDuration)
+            }
+          }
+        }
+
+        BIND((?avgK1 * 0.5 + ?avgK2 * 0.5) AS ?keiMix)
+
+        BIND(ABS(?keiMix - ?avgS) AS ?kei3Diff)
+
+        BIND(xsd:integer(5 - round(?kei3Diff)) AS ?kei3Level)
+
+        { SELECT (MAX(?t) AS ?now) WHERE { ?s saref:hasTimestamp ?t . } }
+
+        BIND("KEI_System" AS ?systemId)
+
+        SERVICE <rusalka://local/oberek-metadata> {
+          ?sensorUri a saref:Sensor ;
+                     rdfs:label ?sensorLabel ;
+                     saref:observes nb:KEI-3, ?location .
+
+          ?deviceUri a saref:Device ;
+                     saref:hasIdentifier ?systemId ;
+                     saref:consistsOf ?sensorUri .
+          ?location saref:hasPropertyOfInterest nb:KEI-3 .
+        }
+
+        BIND(IRI(CONCAT(STR(?location), "/kei3-obs/", STR(?now))) AS ?obs_iri)
+        BIND(IRI(CONCAT(STR(?location), "/KEI-3/", STR(?now))) AS ?prop_val_kei3)
+      }
+    mergeWithOriginalDataset: false
+
+  - flow: util.log
+    name: kei3-OUT
+    onElement: info
+    onPipelineError: error
+    onPipelineFinish: warn
+
+  - type: !template save-multiple-formats
+    s3Prefix: "keis/kei-3/"
+    lowerModel: universal-sensor-export-processing
+    kafkaTopic: "oberek.calculated.kei3"
+    prefixes:
+      nb: "https://neverblink.eu/ontologies/oberek/"
+      nbi: "https://neverblink.eu/oberek/"
+      saref: "https://saref.etsi.org/core/"
+      geo: "http://www.opengis.net/ont/geosparql#"
+      unit: "http://qudt.org/vocab/unit/"
+      rdfs: "http://www.w3.org/2000/01/rdf-schema#"
+      xsd: "http://www.w3.org/2001/XMLSchema#"
+
+  - type: !template save-to-lmdb
+
+  - flow: error.logAndSkip
+
+  - sink: util.ignoreSink

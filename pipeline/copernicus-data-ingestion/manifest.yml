@@ -1,0 +1,409 @@
+type: pipeline
+steps:
+  - type: !template copernicus-credentials
+
+  - flow: string.toBytes
+  - flow: http.assembleBodyRequest
+    uri: "<COPERNICUS_TOKEN_URL>"
+    method: POST
+    contentType: "application/x-www-form-urlencoded"
+
+  - flow: http.client
+  - flow: http.extractBodyFromResponse
+    throwOnErrorCode: true
+  - flow: bytes.collectStream
+  - flow: json.parse
+
+  - flow: jsonnet.transform
+    inType: Json
+    outType: RdfDataset
+    model:
+      type: jsonnet
+      source: |
+        [
+          rdf.triple(
+            rdf.iri("http://example.org/copernicusRequest"),
+            rdf.iri("http://example.org/accessToken"),
+            rdf.literal(input.access_token)
+          )
+        ]
+
+  # The requested scene is the Global location's bounding box.
+  - flow: sparql.streamGraphQuery
+    query: |
+      CONSTRUCT { ?req <http://example.org/sceneWkt> ?sceneWkt . }
+      WHERE {
+        ?req <http://example.org/accessToken> ?token .
+        SERVICE <rusalka://local/oberek-metadata> {
+          nbi:Location-Global geo:hasBoundingBox/geo:asWKT ?wkt .
+        }
+        BIND (STR(?wkt) AS ?sceneWkt)
+      }
+    mergeWithOriginalDataset: true
+
+  - flow: time.withSystemTime
+  - flow: jsonnet.transformWithContext
+    inType: RdfDataset
+    contextType: Timestamp
+    outType: HttpRequest
+    model: copernicus-data-processing
+  - flow: util.dropContext
+
+  - flow: http.client
+  - flow: http.extractBodyFromResponse
+    throwOnErrorCode: true
+  - flow: bytes.collectStream
+
+  - flow: geoTiff.toTensor
+
+  - flow: jsonnet.transform
+    inType: Value
+    outType: RdfDataset
+    model:
+      type: jsonnet
+      source: |
+        [
+          rdf.triple(
+            rdf.iri("http://example.org/copernicusScene"),
+            rdf.iri("http://example.org/hasTensor"),
+            input
+          )
+        ]
+
+  - flow: util.dropRepeated
+
+  - flow: sparql.streamGraphQuery
+    query: |
+
+      CONSTRUCT {
+        ?deviceUri a saref:Device ;
+          saref:hasIdentifier ?copernicusId ;
+          saref:consistsOf ?sensorUri .
+
+        ?sensorUri a saref:Sensor ;
+          rdfs:label ?sensorLabel ;
+          saref:madeExecution ?obs .
+
+        ?obs a saref:Observation;
+          saref:hasTimestamp ?currentDateTime ;
+          saref:hasIdentifier ?identifier ;
+          saref:observes ?locationUri, nb:chlorophyll, nb:secchiDiskDepth, nb:phycocyanin, nb:ndvi, nb:ndmi, nb:ndwi, nb:evi, nb:fcover, nb:waterCoverage, nb:vegetationCoverage ;
+          saref:hasResult
+            ?r_water, ?r_veg,
+            ?r_chl_med, ?r_chl_iqr, ?r_chl_mad,
+            ?r_fcover_med, ?r_fcover_iqr, ?r_fcover_mad,
+            ?r_sdd_med, ?r_sdd_iqr, ?r_sdd_mad,
+            ?r_pc_med, ?r_pc_iqr, ?r_pc_mad,
+            ?r_ndvi_med, ?r_ndvi_iqr, ?r_ndvi_mad,
+            ?r_ndmi_med, ?r_ndmi_iqr, ?r_ndmi_mad,
+            ?r_ndwi_med, ?r_ndwi_iqr, ?r_ndwi_mad,
+            ?r_evi_med, ?r_evi_iqr, ?r_evi_mad .
+
+        ?r_water a saref:PropertyValue ; saref:isValueOfProperty nb:waterCoverage ; saref:isMeasuredIn unit:PERCENT; saref:hasValue ?water_percent .
+        ?r_veg a saref:PropertyValue ; saref:isValueOfProperty nb:vegetationCoverage ; saref:isMeasuredIn unit:PERCENT; saref:hasValue ?veg_percent .
+
+        ?r_chl_med a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:chlorophyll ; saref:isValueOfProperty nb:chlorophyll ; disco:summaryStatisticType sst:66851a3; saref:hasValue ?chl_median ; saref:isMeasuredIn unit:MicroGM-PER-L .
+        ?r_chl_iqr a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:chlorophyll ; saref:isValueOfProperty nb:chlorophyll ; disco:summaryStatisticType sst:a7f7339; saref:hasValue ?chl_iqr ; saref:isMeasuredIn unit:MicroGM-PER-L .
+        ?r_chl_mad a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:chlorophyll ; saref:isValueOfProperty nb:chlorophyll ; disco:summaryStatisticType sst:5dc5781; saref:hasValue ?chl_mad ; saref:isMeasuredIn unit:MicroGM-PER-L .
+
+        ?r_fcover_med a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:fcover ; saref:isValueOfProperty nb:fcover ; disco:summaryStatisticType sst:66851a3; saref:hasValue ?fcover_median ; saref:isMeasuredIn unit:UNITLESS .
+        ?r_fcover_iqr a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:fcover ; saref:isValueOfProperty nb:fcover ; disco:summaryStatisticType sst:a7f7339; saref:hasValue ?fcover_iqr ; saref:isMeasuredIn unit:UNITLESS .
+        ?r_fcover_mad a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:fcover ; saref:isValueOfProperty nb:fcover ; disco:summaryStatisticType sst:5dc5781; saref:hasValue ?fcover_mad ; saref:isMeasuredIn unit:UNITLESS .
+
+        ?r_sdd_med a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:secchiDiskDepth ; saref:isValueOfProperty nb:secchiDiskDepth ; disco:summaryStatisticType sst:66851a3; saref:hasValue ?sdd_median ; saref:isMeasuredIn unit:M .
+        ?r_sdd_iqr a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:secchiDiskDepth ; saref:isValueOfProperty nb:secchiDiskDepth ; disco:summaryStatisticType sst:a7f7339; saref:hasValue ?sdd_iqr ; saref:isMeasuredIn unit:M .
+        ?r_sdd_mad a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:secchiDiskDepth ; saref:isValueOfProperty nb:secchiDiskDepth ; disco:summaryStatisticType sst:5dc5781; saref:hasValue ?sdd_mad ; saref:isMeasuredIn unit:M .
+
+        ?r_pc_med a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:phycocyanin ; saref:isValueOfProperty nb:phycocyanin ; disco:summaryStatisticType sst:66851a3; saref:hasValue ?pc_median ; saref:isMeasuredIn unit:MicroGM-PER-L .
+        ?r_pc_iqr a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:phycocyanin ; saref:isValueOfProperty nb:phycocyanin ; disco:summaryStatisticType sst:a7f7339; saref:hasValue ?pc_iqr ; saref:isMeasuredIn unit:MicroGM-PER-L .
+        ?r_pc_mad a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:phycocyanin ; saref:isValueOfProperty nb:phycocyanin ; disco:summaryStatisticType sst:5dc5781; saref:hasValue ?pc_mad ; saref:isMeasuredIn unit:MicroGM-PER-L .
+
+        ?r_ndvi_med a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:ndvi ; saref:isValueOfProperty nb:ndvi ; disco:summaryStatisticType sst:66851a3; saref:hasValue ?ndvi_median ; saref:isMeasuredIn unit:UNITLESS .
+        ?r_ndvi_iqr a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:ndvi ; saref:isValueOfProperty nb:ndvi ; disco:summaryStatisticType sst:a7f7339; saref:hasValue ?ndvi_iqr ; saref:isMeasuredIn unit:UNITLESS .
+        ?r_ndvi_mad a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:ndvi ; saref:isValueOfProperty nb:ndvi ; disco:summaryStatisticType sst:5dc5781; saref:hasValue ?ndvi_mad ; saref:isMeasuredIn unit:UNITLESS .
+
+        ?r_ndmi_med a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:ndmi ; saref:isValueOfProperty nb:ndmi ; disco:summaryStatisticType sst:66851a3; saref:hasValue ?ndmi_median ; saref:isMeasuredIn unit:UNITLESS .
+        ?r_ndmi_iqr a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:ndmi ; saref:isValueOfProperty nb:ndmi ; disco:summaryStatisticType sst:a7f7339; saref:hasValue ?ndmi_iqr ; saref:isMeasuredIn unit:UNITLESS .
+        ?r_ndmi_mad a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:ndmi ; saref:isValueOfProperty nb:ndmi ; disco:summaryStatisticType sst:5dc5781; saref:hasValue ?ndmi_mad ; saref:isMeasuredIn unit:UNITLESS .
+
+        ?r_ndwi_med a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:ndwi ; saref:isValueOfProperty nb:ndwi ; disco:summaryStatisticType sst:66851a3; saref:hasValue ?ndwi_median ; saref:isMeasuredIn unit:UNITLESS .
+        ?r_ndwi_iqr a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:ndwi ; saref:isValueOfProperty nb:ndwi ; disco:summaryStatisticType sst:a7f7339; saref:hasValue ?ndwi_iqr ; saref:isMeasuredIn unit:UNITLESS .
+        ?r_ndwi_mad a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:ndwi ; saref:isValueOfProperty nb:ndwi ; disco:summaryStatisticType sst:5dc5781; saref:hasValue ?ndwi_mad ; saref:isMeasuredIn unit:UNITLESS .
+
+        ?r_evi_med a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:evi ; saref:isValueOfProperty nb:evi ; disco:summaryStatisticType sst:66851a3; saref:hasValue ?evi_median ; saref:isMeasuredIn unit:UNITLESS .
+        ?r_evi_iqr a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:evi ; saref:isValueOfProperty nb:evi ; disco:summaryStatisticType sst:a7f7339; saref:hasValue ?evi_iqr ; saref:isMeasuredIn unit:UNITLESS .
+        ?r_evi_mad a disco:SummaryStatistics, saref:PropertyValue ; disco:statisticsVariable nb:evi ; saref:isValueOfProperty nb:evi ; disco:summaryStatisticType sst:5dc5781; saref:hasValue ?evi_mad ; saref:isMeasuredIn unit:UNITLESS .
+
+        ?locationUri a saref:FeatureOfInterest ;
+          geo:hasBoundingBox ?bbox ;
+          nb:hasAquaticBoundingBox ?aqBbox .
+
+        ?bbox a geo:Geometry ;
+          geo:asWKT ?wkt .
+
+        ?aqBbox a geo:Geometry ;
+          geo:asWKT ?aqWkt .
+      }
+
+      WHERE {
+        ?sub ?pred ?obj .
+
+        BIND (t:sub(t:range(), t:range(), t:range(0,1), ?obj) AS ?b02)
+        BIND (t:sub(t:range(), t:range(), t:range(1,2), ?obj) AS ?b03)
+        BIND (t:sub(t:range(), t:range(), t:range(2,3), ?obj) AS ?b04)
+        BIND (t:sub(t:range(), t:range(), t:range(3,4), ?obj) AS ?b05)
+        BIND (t:sub(t:range(), t:range(), t:range(4,5), ?obj) AS ?b06)
+        BIND (t:sub(t:range(), t:range(), t:range(6,7), ?obj) AS ?b08)
+        BIND (t:sub(t:range(), t:range(), t:range(8,9), ?obj) AS ?b11)
+        BIND (t:sub(t:range(), t:range(), t:range(14,15), ?obj) AS ?scl)
+
+        BIND (NOW() AS ?currentDateTime)
+        BIND (t:concat(2, t:sub(t:range(), t:range(), t:range(1,6), ?obj), t:sub(t:range(), t:range(), t:range(7,14), ?obj)) AS ?fcover_input)
+
+        BIND (t:neq(?scl, t:create("float32", 8.0)) AS ?mask_neq_8)
+        BIND (t:neq(?scl, t:create("float32", 9.0)) AS ?mask_neq_9)
+        BIND (t:and(?mask_neq_8, ?mask_neq_9) AS ?not_cloud)
+        BIND (t:cast("int32", ?not_cloud) AS ?mask_cloud)
+
+        BIND (t:and(t:neq(?scl, t:create("float32", 6.0)), ?not_cloud) AS ?is_land)
+        BIND (t:eq(?scl, t:create("float32", 6.0)) AS ?is_water)
+
+        # Band formulas expect 0-1 surface reflectance.
+        # Chl-a [ug/L]: MCI = B06 - (B04 - (B03 - B04) * 0.38); Chl-a = 185.91 * exp(31.62 * MCI)
+        BIND (t:subtract(?b04, t:multiply(t:create("float32", 0.38), t:subtract(?b03, ?b04))) AS ?chl_baseline)
+        BIND (t:subtract(?b06, ?chl_baseline) AS ?chl_mci)
+        BIND (t:cast("float32", t:exp(t:multiply(t:create("float32", 31.62), ?chl_mci))) AS ?chl_exp)
+        BIND (t:multiply(t:create("float32", 185.91), ?chl_exp) AS ?chl)
+        BIND (t:multiply(?chl, ?mask_cloud) AS ?chl_masked)
+
+        # SDD [m]: MCI = B05 - 1.04 * (B04 + (B04 - B03) * 0.43); SDD = -3.249 * MCI + 0.397
+        BIND (t:add(?b04, t:multiply(t:create("float32", 0.43), t:subtract(?b04, ?b03))) AS ?sdd_baseline)
+        BIND (t:subtract(?b05, t:multiply(t:create("float32", 1.04), ?sdd_baseline)) AS ?sdd_mci)
+        BIND (t:subtract(t:create("float32", 0.397), t:multiply(t:create("float32", 3.249), ?sdd_mci)) AS ?sdd)
+        BIND (t:multiply(?sdd, ?mask_cloud) AS ?sdd_masked)
+
+        # PC [ug/L]: MCI = B04 - 1.03 * (B02 + (B05 - B02) * 0.46); PC = -16840 * MCI - 8.5
+        BIND (t:add(?b02, t:multiply(t:create("float32", 0.46), t:subtract(?b05, ?b02))) AS ?pc_baseline)
+        BIND (t:subtract(?b04, t:multiply(t:create("float32", 1.03), ?pc_baseline)) AS ?pc_mci)
+        BIND (t:subtract(t:create("float32", 0.0), t:add(t:multiply(t:create("float32", 16840.0), ?pc_mci), t:create("float32", 8.5))) AS ?pc_raw)
+        BIND (t:cast("int32", t:gt(?pc_raw, t:create("float32", 0.0))) AS ?pc_positive)
+        BIND (t:multiply(?pc_raw, ?pc_positive) AS ?pc)
+        BIND (t:multiply(?pc, ?mask_cloud) AS ?pc_masked)
+
+        BIND (t:divide(t:subtract(?b08, ?b04), t:add(t:add(?b08, ?b04), t:create("float32", 1E-06))) AS ?ndvi)
+        BIND (t:multiply(?ndvi, ?mask_cloud) AS ?ndvi_masked)
+
+        BIND (t:divide(t:subtract(?b03, ?b08), t:add(t:add(?b03, ?b08), t:create("float32", 1E-06))) AS ?ndwi)
+        BIND (t:multiply(?ndwi, ?mask_cloud) AS ?ndwi_masked)
+
+        BIND (t:divide(t:subtract(?b08, ?b11), t:add(t:add(?b08, ?b11), t:create("float32", 1E-06))) AS ?ndmi)
+        BIND (t:multiply(?ndmi, ?mask_cloud) AS ?ndmi_masked)
+
+        BIND (t:subtract(?b08, ?b04) AS ?evi_numer)
+        BIND (t:add(t:subtract(t:add(?b08, t:multiply(t:create("float32", 6.0), ?b04)), t:multiply(t:create("float32", 7.5), ?b02)), t:create("float32", 1.0)) AS ?evi_denum)
+        BIND (t:multiply(t:create("float32", 2.5), t:divide(?evi_numer, t:add(?evi_denum, t:create("float32", 1E-06)))) AS ?evi)
+        BIND (t:multiply(?evi, ?mask_cloud) AS ?evi_masked)
+
+        BIND(
+          rusalka:infer(
+            "fcover",
+            "fcover_map",
+            "input_image", ?fcover_input
+          ) AS ?fcover
+        )
+
+        BIND (t:multiply(?fcover, ?mask_cloud) AS ?fcover_masked)
+        BIND (t:create("int64", 0) AS ?zero_int64)
+        BIND (t:create("float32", 0.0) AS ?zero_float32)
+
+        # Pixel windows from the metadata boxes, relative to the scene (the Global box). Row 0 = north, column 0 = west.
+        # ?rx/?ry: location box (land indices). ?ax/?ay: water tile (water indices).
+        BIND ("Copernicus" AS ?copernicusId)
+        SERVICE <rusalka://local/oberek-metadata> {
+          ?deviceUri a saref:Device ;
+                     saref:hasIdentifier ?copernicusId ;
+                     saref:consistsOf ?sensorUri .
+          ?sensorUri a saref:Sensor ;
+                     saref:observes ?locationUri ;
+                     rdfs:label ?sensorLabel .
+          ?locationUri a saref:FeatureOfInterest ;
+                       geo:hasBoundingBox ?bbox ;
+                       nb:hasAquaticBoundingBox ?aqBbox .
+          ?bbox a geo:Geometry ;
+                geo:asWKT ?wkt .
+          ?aqBbox a geo:Geometry ;
+                  geo:asWKT ?aqWkt .
+          nbi:Location-Global geo:hasBoundingBox/geo:asWKT ?sceneWkt .
+        }
+        BIND (STRAFTER(STR(?locationUri), "Location-") AS ?identifier)
+        BIND (xsd:integer(t:index(t:shape(?obj), t:create("int64", 0))) AS ?rows)
+        BIND (xsd:integer(t:index(t:shape(?obj), t:create("int64", 1))) AS ?cols)
+        BIND (REPLACE(STRBEFORE(STRAFTER(STR(?sceneWkt), "(("), "))"), ", ", ",") AS ?scene_ring)
+        BIND (STRBEFORE(?scene_ring, ",") AS ?scene_c1)
+        BIND (STRBEFORE(STRAFTER(STRAFTER(?scene_ring, ","), ","), ",") AS ?scene_c3)
+        BIND (xsd:decimal(STRBEFORE(?scene_c1, " ")) AS ?scene_lon1)
+        BIND (xsd:decimal(STRAFTER(?scene_c1, " ")) AS ?scene_lat1)
+        BIND (xsd:decimal(STRBEFORE(?scene_c3, " ")) AS ?scene_lon3)
+        BIND (xsd:decimal(STRAFTER(?scene_c3, " ")) AS ?scene_lat3)
+        BIND (IF(?scene_lon1 < ?scene_lon3, ?scene_lon1, ?scene_lon3) AS ?scene_w)
+        BIND (IF(?scene_lon1 < ?scene_lon3, ?scene_lon3, ?scene_lon1) AS ?scene_e)
+        BIND (IF(?scene_lat1 < ?scene_lat3, ?scene_lat1, ?scene_lat3) AS ?scene_s)
+        BIND (IF(?scene_lat1 < ?scene_lat3, ?scene_lat3, ?scene_lat1) AS ?scene_n)
+        BIND (REPLACE(STRBEFORE(STRAFTER(STR(?wkt), "(("), "))"), ", ", ",") AS ?loc_ring)
+        BIND (STRBEFORE(?loc_ring, ",") AS ?loc_c1)
+        BIND (STRBEFORE(STRAFTER(STRAFTER(?loc_ring, ","), ","), ",") AS ?loc_c3)
+        BIND (xsd:decimal(STRBEFORE(?loc_c1, " ")) AS ?loc_lon1)
+        BIND (xsd:decimal(STRAFTER(?loc_c1, " ")) AS ?loc_lat1)
+        BIND (xsd:decimal(STRBEFORE(?loc_c3, " ")) AS ?loc_lon3)
+        BIND (xsd:decimal(STRAFTER(?loc_c3, " ")) AS ?loc_lat3)
+        BIND (IF(?loc_lon1 < ?loc_lon3, ?loc_lon1, ?loc_lon3) AS ?loc_w)
+        BIND (IF(?loc_lon1 < ?loc_lon3, ?loc_lon3, ?loc_lon1) AS ?loc_e)
+        BIND (IF(?loc_lat1 < ?loc_lat3, ?loc_lat1, ?loc_lat3) AS ?loc_s)
+        BIND (IF(?loc_lat1 < ?loc_lat3, ?loc_lat3, ?loc_lat1) AS ?loc_n)
+        BIND (REPLACE(STRBEFORE(STRAFTER(STR(?aqWkt), "(("), "))"), ", ", ",") AS ?aq_ring)
+        BIND (STRBEFORE(?aq_ring, ",") AS ?aq_c1)
+        BIND (STRBEFORE(STRAFTER(STRAFTER(?aq_ring, ","), ","), ",") AS ?aq_c3)
+        BIND (xsd:decimal(STRBEFORE(?aq_c1, " ")) AS ?aq_lon1)
+        BIND (xsd:decimal(STRAFTER(?aq_c1, " ")) AS ?aq_lat1)
+        BIND (xsd:decimal(STRBEFORE(?aq_c3, " ")) AS ?aq_lon3)
+        BIND (xsd:decimal(STRAFTER(?aq_c3, " ")) AS ?aq_lat3)
+        BIND (IF(?aq_lon1 < ?aq_lon3, ?aq_lon1, ?aq_lon3) AS ?aq_w)
+        BIND (IF(?aq_lon1 < ?aq_lon3, ?aq_lon3, ?aq_lon1) AS ?aq_e)
+        BIND (IF(?aq_lat1 < ?aq_lat3, ?aq_lat1, ?aq_lat3) AS ?aq_s)
+        BIND (IF(?aq_lat1 < ?aq_lat3, ?aq_lat3, ?aq_lat1) AS ?aq_n)
+        BIND (xsd:integer(ROUND((?scene_n - ?loc_n) / (?scene_n - ?scene_s) * ?rows)) AS ?rx1)
+        BIND (xsd:integer(ROUND((?scene_n - ?loc_s) / (?scene_n - ?scene_s) * ?rows)) AS ?rx2)
+        BIND (xsd:integer(ROUND((?loc_w - ?scene_w) / (?scene_e - ?scene_w) * ?cols)) AS ?ry1)
+        BIND (xsd:integer(ROUND((?loc_e - ?scene_w) / (?scene_e - ?scene_w) * ?cols)) AS ?ry2)
+        BIND (xsd:integer(ROUND((?scene_n - ?aq_n) / (?scene_n - ?scene_s) * ?rows)) AS ?ax1)
+        BIND (xsd:integer(ROUND((?scene_n - ?aq_s) / (?scene_n - ?scene_s) * ?rows)) AS ?ax2)
+        BIND (xsd:integer(ROUND((?aq_w - ?scene_w) / (?scene_e - ?scene_w) * ?cols)) AS ?ay1)
+        BIND (xsd:integer(ROUND((?aq_e - ?scene_w) / (?scene_e - ?scene_w) * ?cols)) AS ?ay2)
+
+        BIND (CONCAT("https://neverblink.eu/oberek/Copernicus/", ?identifier, "/", STR(?currentDateTime)) AS ?obsBase)
+        BIND (IRI(CONCAT(?obsBase, "/obs")) AS ?obs)
+        BIND (IRI(CONCAT(?obsBase, "/water")) AS ?r_water)
+        BIND (IRI(CONCAT(?obsBase, "/veg")) AS ?r_veg)
+        BIND (IRI(CONCAT(?obsBase, "/chl-med")) AS ?r_chl_med)
+        BIND (IRI(CONCAT(?obsBase, "/chl-iqr")) AS ?r_chl_iqr)
+        BIND (IRI(CONCAT(?obsBase, "/chl-mad")) AS ?r_chl_mad)
+        BIND (IRI(CONCAT(?obsBase, "/fcover-med")) AS ?r_fcover_med)
+        BIND (IRI(CONCAT(?obsBase, "/fcover-iqr")) AS ?r_fcover_iqr)
+        BIND (IRI(CONCAT(?obsBase, "/fcover-mad")) AS ?r_fcover_mad)
+        BIND (IRI(CONCAT(?obsBase, "/sdd-med")) AS ?r_sdd_med)
+        BIND (IRI(CONCAT(?obsBase, "/sdd-iqr")) AS ?r_sdd_iqr)
+        BIND (IRI(CONCAT(?obsBase, "/sdd-mad")) AS ?r_sdd_mad)
+        BIND (IRI(CONCAT(?obsBase, "/pc-med")) AS ?r_pc_med)
+        BIND (IRI(CONCAT(?obsBase, "/pc-iqr")) AS ?r_pc_iqr)
+        BIND (IRI(CONCAT(?obsBase, "/pc-mad")) AS ?r_pc_mad)
+        BIND (IRI(CONCAT(?obsBase, "/ndvi-med")) AS ?r_ndvi_med)
+        BIND (IRI(CONCAT(?obsBase, "/ndvi-iqr")) AS ?r_ndvi_iqr)
+        BIND (IRI(CONCAT(?obsBase, "/ndvi-mad")) AS ?r_ndvi_mad)
+        BIND (IRI(CONCAT(?obsBase, "/ndmi-med")) AS ?r_ndmi_med)
+        BIND (IRI(CONCAT(?obsBase, "/ndmi-iqr")) AS ?r_ndmi_iqr)
+        BIND (IRI(CONCAT(?obsBase, "/ndmi-mad")) AS ?r_ndmi_mad)
+        BIND (IRI(CONCAT(?obsBase, "/ndwi-med")) AS ?r_ndwi_med)
+        BIND (IRI(CONCAT(?obsBase, "/ndwi-iqr")) AS ?r_ndwi_iqr)
+        BIND (IRI(CONCAT(?obsBase, "/ndwi-mad")) AS ?r_ndwi_mad)
+        BIND (IRI(CONCAT(?obsBase, "/evi-med")) AS ?r_evi_med)
+        BIND (IRI(CONCAT(?obsBase, "/evi-iqr")) AS ?r_evi_iqr)
+        BIND (IRI(CONCAT(?obsBase, "/evi-mad")) AS ?r_evi_mad)
+
+        BIND (t:sub(t:range(?rx1,?rx2), t:range(?ry1,?ry2), t:range(), ?is_water) AS ?is_water_final)
+        BIND (t:sub(t:range(?rx1,?rx2), t:range(?ry1,?ry2), t:range(), ?is_land) AS ?is_land_final)
+
+        BIND (t:sub(t:range(?ax1,?ax2), t:range(?ay1,?ay2), t:range(), ?is_water) AS ?is_water_aq)
+        BIND (t:sub(t:range(?ax1,?ax2), t:range(?ay1,?ay2), t:range(), ?chl_masked) AS ?chl_final)
+
+        BIND (t:sub(t:range(?rx1,?rx2), t:range(?ry1,?ry2), t:range(), ?ndwi_masked) AS ?ndwi_final)
+
+        BIND (xsd:integer(t:index(t:shape(t:flatten(?ndwi_final)), ?zero_int64) + 1) AS ?tensor_shape)
+        BIND (xsd:float(?tensor_shape/(?tensor_shape-1)) AS ?penalty)
+        BIND (t:arange("int32", 1, ?tensor_shape) AS ?tensor_rank)
+
+        BIND (t:mask(?chl_final, ?is_water_aq) AS ?chl_masked_flat)
+        BIND (xsd:integer(t:index(t:shape(?chl_masked_flat), ?zero_int64)) AS ?water_px)
+
+        BIND (IF(?water_px > 0, t:quantileInterpolate(0.5, -1, ?chl_masked_flat), ?unbound) AS ?chl_median)
+        BIND (IF(?water_px > 0, t:quantileInterpolate(0.75, -1, ?chl_masked_flat) - t:quantileInterpolate(0.25, -1, ?chl_masked_flat), ?unbound) AS ?chl_iqr)
+        BIND (IF(?water_px > 0, t:quantileInterpolate(0.5, -1, t:abs(t:subtract(?chl_masked_flat, t:create("float32", ?chl_median)))), ?unbound) AS ?chl_mad)
+
+        BIND (t:sub(t:range(?rx1,?rx2), t:range(?ry1,?ry2), t:range(), ?fcover_masked) AS ?fcover_final)
+        BIND (t:mask(?fcover_final, ?is_land_final) AS ?fcover_masked_flat)
+        BIND (xsd:integer(t:index(t:shape(?fcover_masked_flat), ?zero_int64)) AS ?land_px)
+
+        BIND (IF(?land_px > 0, t:quantileInterpolate(0.5, -1, ?fcover_masked_flat), ?unbound) AS ?fcover_median)
+        BIND (IF(?land_px > 0, t:quantileInterpolate(0.75, -1, ?fcover_masked_flat) - t:quantileInterpolate(0.25, -1, ?fcover_masked_flat), ?unbound) AS ?fcover_iqr)
+        BIND (IF(?land_px > 0, t:quantileInterpolate(0.5, -1, t:abs(t:subtract(?fcover_masked_flat, t:create("float32", ?fcover_median)))), ?unbound) AS ?fcover_mad)
+        BIND (t:gt(t:flatten(?fcover_final), t:create("float32", 0.2)) AS ?fcover_veg)
+        BIND (xsd:integer(t:index(t:shape(t:mask(t:flatten(?fcover_final),?fcover_veg)), ?zero_int64)) AS ?veg_count)
+        BIND (100*(?veg_count/(?tensor_shape-1)) AS ?veg_percent)
+
+        BIND (t:sub(t:range(?ax1,?ax2), t:range(?ay1,?ay2), t:range(), ?sdd_masked) AS ?sdd_final)
+        BIND (t:mask(?sdd_final, ?is_water_aq) AS ?sdd_masked_flat)
+
+        BIND (IF(?water_px > 0, t:quantileInterpolate(0.5, -1, ?sdd_masked_flat), ?unbound) AS ?sdd_median)
+        BIND (IF(?water_px > 0, t:quantileInterpolate(0.75, -1, ?sdd_masked_flat) - t:quantileInterpolate(0.25, -1, ?sdd_masked_flat), ?unbound) AS ?sdd_iqr)
+        BIND (IF(?water_px > 0, t:quantileInterpolate(0.5, -1, t:abs(t:subtract(?sdd_masked_flat, t:create("float32", ?sdd_median)))), ?unbound) AS ?sdd_mad)
+
+        BIND (t:sub(t:range(?ax1,?ax2), t:range(?ay1,?ay2), t:range(), ?pc_masked) AS ?pc_final)
+        BIND (t:mask(?pc_final, ?is_water_aq) AS ?pc_masked_flat)
+
+        BIND (IF(?water_px > 0, t:quantileInterpolate(0.5, -1, ?pc_masked_flat), ?unbound) AS ?pc_median)
+        BIND (IF(?water_px > 0, t:quantileInterpolate(0.75, -1, ?pc_masked_flat) - t:quantileInterpolate(0.25, -1, ?pc_masked_flat), ?unbound) AS ?pc_iqr)
+        BIND (IF(?water_px > 0, t:quantileInterpolate(0.5, -1, t:abs(t:subtract(?pc_masked_flat, t:create("float32", ?pc_median)))), ?unbound) AS ?pc_mad)
+
+        BIND (t:sub(t:range(?rx1,?rx2), t:range(?ry1,?ry2), t:range(), ?ndvi_masked) AS ?ndvi_final)
+        BIND (t:mask(?ndvi_final, ?is_land_final) AS ?ndvi_masked_flat)
+
+        BIND (IF(?land_px > 0, t:quantileInterpolate(0.5, -1, ?ndvi_masked_flat), ?unbound) AS ?ndvi_median)
+        BIND (IF(?land_px > 0, t:quantileInterpolate(0.75, -1, ?ndvi_masked_flat) - t:quantileInterpolate(0.25, -1, ?ndvi_masked_flat), ?unbound) AS ?ndvi_iqr)
+        BIND (IF(?land_px > 0, t:quantileInterpolate(0.5, -1, t:abs(t:subtract(?ndvi_masked_flat, t:create("float32", ?ndvi_median)))), ?unbound) AS ?ndvi_mad)
+
+        BIND (t:gt(t:flatten(?ndwi_final), t:create("float32", 0.1)) AS ?ndwi_water)
+        BIND (xsd:integer(t:index(t:shape(t:mask(t:flatten(?ndwi_final),?ndwi_water)), ?zero_int64)) AS ?water_count)
+        BIND (100*(?water_count/(?tensor_shape-1)) AS ?water_percent)
+        BIND (t:sub(t:range(?ax1,?ax2), t:range(?ay1,?ay2), t:range(), ?ndwi_masked) AS ?ndwi_aq)
+        BIND (t:mask(?ndwi_aq, ?is_water_aq) AS ?ndwi_masked_flat)
+
+        BIND (IF(?water_px > 0, t:quantileInterpolate(0.5, -1, ?ndwi_masked_flat), ?unbound) AS ?ndwi_median)
+        BIND (IF(?water_px > 0, t:quantileInterpolate(0.75, -1, ?ndwi_masked_flat) - t:quantileInterpolate(0.25, -1, ?ndwi_masked_flat), ?unbound) AS ?ndwi_iqr)
+        BIND (IF(?water_px > 0, t:quantileInterpolate(0.5, -1, t:abs(t:subtract(?ndwi_masked_flat, t:create("float32", ?ndwi_median)))), ?unbound) AS ?ndwi_mad)
+
+        BIND (t:sub(t:range(?rx1,?rx2), t:range(?ry1,?ry2), t:range(), ?ndmi_masked) AS ?ndmi_final)
+        BIND (t:mask(?ndmi_final, ?is_land_final) AS ?ndmi_masked_flat)
+
+        BIND (IF(?land_px > 0, t:quantileInterpolate(0.5, -1, ?ndmi_masked_flat), ?unbound) AS ?ndmi_median)
+        BIND (IF(?land_px > 0, t:quantileInterpolate(0.75, -1, ?ndmi_masked_flat) - t:quantileInterpolate(0.25, -1, ?ndmi_masked_flat), ?unbound) AS ?ndmi_iqr)
+        BIND (IF(?land_px > 0, t:quantileInterpolate(0.5, -1, t:abs(t:subtract(?ndmi_masked_flat, t:create("float32", ?ndmi_median)))), ?unbound) AS ?ndmi_mad)
+
+        BIND (t:sub(t:range(?rx1,?rx2), t:range(?ry1,?ry2), t:range(), ?evi_masked) AS ?evi_final)
+        BIND (t:mask(?evi_final, ?is_land_final) AS ?evi_masked_flat)
+
+        BIND (IF(?land_px > 0, t:quantileInterpolate(0.5, -1, ?evi_masked_flat), ?unbound) AS ?evi_median)
+        BIND (IF(?land_px > 0, t:quantileInterpolate(0.75, -1, ?evi_masked_flat) - t:quantileInterpolate(0.25, -1, ?evi_masked_flat), ?unbound) AS ?evi_iqr)
+        BIND (IF(?land_px > 0, t:quantileInterpolate(0.5, -1, t:abs(t:subtract(?evi_masked_flat, t:create("float32", ?evi_median)))), ?unbound) AS ?evi_mad)
+      }
+    mergeWithOriginalDataset: false
+
+  - flow: util.log
+    name: copernicus-OUT
+    onElement: info
+
+  - type: !template save-multiple-formats
+    s3Prefix: "raw/copernicus/"
+    lowerModel: universal-sensor-export-processing
+    kafkaTopic: "oberek.raw.copernicus"
+    prefixes:
+      nb: "https://neverblink.eu/ontologies/oberek/"
+      nbi: "https://neverblink.eu/oberek/"
+      unit: "http://qudt.org/vocab/unit/"
+      rdf: "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+      saref: "https://saref.etsi.org/core/"
+      geo: "http://www.opengis.net/ont/geosparql#"
+      xsd: "http://www.w3.org/2001/XMLSchema#"
+      disco: "http://rdf-vocabulary.ddialliance.org/discovery#"
+      sst: "http://rdf-vocabulary.ddialliance.org/cv/SummaryStatisticType/2.1.2/"
+  - type: !template save-to-lmdb
+  - flow: error.logAndSkip
+  - sink: util.ignoreSink

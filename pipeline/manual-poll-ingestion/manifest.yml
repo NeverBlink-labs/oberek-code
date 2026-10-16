@@ -1,0 +1,184 @@
+type: pipeline
+runnable: http.runnable
+port: <HTTP_PORT>
+host: "0.0.0.0"
+method: POST
+path: /api/polls/manual-csv
+steps:
+  - flow: http.extractBodyFromRequest
+  - flow: bytes.collectStream
+
+  - flow: csv.parse
+  - flow: error.log
+
+  - flow: jsonnet.transform
+    inType: Table
+    outType: List[Statement]
+    model: manual-poll-processing
+
+  - flow: error.log
+
+  - flow: cast
+    from: List[Statement]
+    to: RdfDataset
+
+  - flow: util.dropRepeated
+
+  - flow: sparql.streamGraphQuery
+    query: |
+
+        CONSTRUCT {
+
+          ?device a saref:Device ;
+            saref:hasIdentifier ?dashId ;
+            saref:consistsOf ?sensor .
+
+          ?sensor a saref:Sensor ;
+            rdfs:label ?sensorLabel ;
+            saref:madeExecution ?obsSat , ?obsCat , ?obsAns .
+
+          ?obsSat a saref:Observation ;
+            saref:hasTimestamp ?timestamp ;
+            saref:hasIdentifier ?satId ;
+            nb:submissionId ?submissionId ;
+            saref:observes nb:satisfactionScore ;
+            saref:hasResult ?resSat .
+
+          ?resSat a saref:PropertyValue ;
+            saref:hasValue ?avgScore ;
+            saref:isValueOfProperty nb:satisfactionScore ;
+            saref:isMeasuredIn nb:FivePointScale ;
+            disco:summaryStatisticType sst:7975ed0 .
+
+          ?obsCat a saref:Observation ;
+            saref:hasTimestamp ?timestamp ;
+            saref:hasIdentifier ?catId ;
+            nb:submissionId ?submissionId ;
+            saref:observes nb:respondentCategory ;
+            saref:hasResult ?resCat .
+
+          ?resCat a saref:PropertyValue ;
+            saref:hasValue ?category ;
+            saref:isValueOfProperty nb:respondentCategory .
+
+          ?obsAns a saref:Observation ;
+            saref:hasTimestamp ?timestamp ;
+            saref:hasIdentifier ?answerId ;
+            nb:submissionId ?submissionId ;
+            saref:observes nb:satisfactionScore ;
+            saref:hasResult ?resAns .
+
+          ?resAns a saref:PropertyValue ;
+            nb:selectedOption ?selectedOption ;
+            saref:hasValue ?mv ;
+            saref:isMeasuredIn nb:FivePointScale ;
+            disco:summaryStatisticType ?ratingQuestionId ;
+            saref:isValueOfProperty nb:satisfactionScore .
+
+        }
+        WHERE {
+          ?submission a saref:Observation ;
+                      nb:forPoll ?pollCurie ;
+                      saref:hasTimestamp ?timestamp .
+
+          {
+            SELECT ?submission (STRUUID() AS ?submissionId)
+            WHERE { ?submission a saref:Observation . }
+            GROUP BY ?submission
+          }
+
+          SERVICE <rusalka://local/oberek-metadata> {
+            ?pollCurie saref:hasIdentifier ?pollId .
+          }
+
+          {
+            SELECT ?submission ?avgScore ?category
+                   ?selectedOption ?ratingQuestionId ?mv
+            WHERE {
+              {
+                {
+                  SELECT ?submission (AVG(?v) AS ?avgScore)
+                  WHERE {
+                    ?submission nb:ratingAnswer ?ra .
+                    ?ra nb:forQuestion ?vq ; nb:answerValue ?v .
+                    SERVICE <rusalka://local/oberek-metadata> {
+                      ?vq nb:hasAnswerOption ?vopt .
+                      ?vopt nb:mapsToValue ?vmv .
+                    }
+                    FILTER(?vmv = ?v)
+                  }
+                  GROUP BY ?submission
+                }
+
+                ?submission nb:categoryAnswer ?rawCategory .
+                OPTIONAL {
+                  SERVICE <rusalka://local/oberek-ontology> {
+                    ?rawCategory a nb:RespondentCategory .
+                  }
+                  BIND(?rawCategory AS ?validCategory)
+                }
+                BIND(COALESCE(?validCategory, nb:OtherRespondent) AS ?category)
+              }
+              UNION
+              {
+                ?submission nb:ratingAnswer ?ra .
+                ?ra nb:forQuestion ?ratingQuestion ;
+                    nb:answerValue ?v .
+
+                SERVICE <rusalka://local/oberek-metadata> {
+                  ?ratingQuestion nb:assessesProperty nb:satisfactionScore ;
+                                  nb:hasAnswerOption ?selectedOption ;
+                                  saref:hasIdentifier ?ratingQuestionId .
+                  OPTIONAL { ?selectedOption nb:mapsToValue ?mv . }
+                }
+                FILTER( (BOUND(?mv) && ?mv = ?v) || (!BOUND(?mv) && ?v = 0) )
+              }
+            }
+          }
+
+          BIND(CONCAT(STR(?pollId), "_", STR(?submissionId)) AS ?satId)
+          BIND(CONCAT(STR(?pollId), "_", STR(?submissionId), "_category") AS ?catId)
+          BIND(CONCAT(STR(?pollId), "_", STR(?submissionId), "_", STR(?ratingQuestionId)) AS ?answerId)
+
+          BIND(IF(BOUND(?avgScore), IRI(CONCAT("https://neverblink.eu/oberek/poll/", ?satId, "/obs")), ?_skip) AS ?obsSat)
+          BIND(IF(BOUND(?avgScore), IRI(CONCAT("https://neverblink.eu/oberek/poll/", ?satId, "/val")), ?_skip) AS ?resSat)
+          BIND(IF(BOUND(?avgScore), IRI(CONCAT("https://neverblink.eu/oberek/poll/", ?catId, "/obs")), ?_skip) AS ?obsCat)
+          BIND(IF(BOUND(?avgScore), IRI(CONCAT("https://neverblink.eu/oberek/poll/", ?catId, "/val")), ?_skip) AS ?resCat)
+          BIND(IF(BOUND(?ratingQuestionId), IRI(CONCAT("https://neverblink.eu/oberek/poll/", ?answerId, "/obs")), ?_skip) AS ?obsAns)
+          BIND(IF(BOUND(?ratingQuestionId), IRI(CONCAT("https://neverblink.eu/oberek/poll/", ?answerId, "/val")), ?_skip) AS ?resAns)
+
+          SERVICE <rusalka://local/oberek-metadata> {
+            ?device saref:hasIdentifier ?dashId ;
+                    saref:consistsOf ?sensor .
+            FILTER(?dashId = "OBEREK_ManualPoll")
+            ?sensor a saref:Sensor ;
+                    saref:observes nb:satisfactionScore ;
+                    rdfs:label ?sensorLabel .
+          }
+        }
+    mergeWithOriginalDataset: false
+
+  - flow: util.log
+    name: poll-manual-OUT
+    onElement: info
+
+  - type: !template save-multiple-formats
+    s3Prefix: "raw/polls/manual/"
+    lowerModel: universal-sensor-export-processing
+    kafkaTopic: "oberek.raw.polls"
+    prefixes:
+      nb: "https://neverblink.eu/ontologies/oberek/"
+      nbi: "https://neverblink.eu/oberek/"
+      saref: "https://saref.etsi.org/core/"
+      xsd: "http://www.w3.org/2001/XMLSchema#"
+      unit: "http://qudt.org/vocab/unit/"
+      rdfs: "http://www.w3.org/2000/01/rdf-schema#"
+      disco: "http://rdf-vocabulary.ddialliance.org/discovery#"
+      sst: "http://rdf-vocabulary.ddialliance.org/cv/SummaryStatisticType/2.1.2/"
+
+  - type: !template save-to-lmdb
+
+  - flow: http.assembleBodylessResponse
+    statusCode: 200
+
+  - flow: http.ifErrorThenHttpError
