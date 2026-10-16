@@ -1,12 +1,12 @@
 # OBEREK data models and pipelines
 
-Ontology, data models and pipelines from the OBEREK project, which monitors L'Albufera (Valencia, Spain). The pipelines collect water quality, weather, river flow, Sentinel-2 and community poll data, turn it into RDF, and calculate the project's Key Environmental Indicators (KEI-1, KEI-2, KEI-3) and the rice blast risk index (PRI).
+Ontology, data models, and pipelines from the OBEREK project, which monitors L'Albufera (Valencia, Spain). The pipelines collect water quality, weather, water flow, Sentinel-2, and community poll data, turn it into RDF, and calculate the project's Key Ecological Indicators (KEI-1, KEI-2, KEI-3) and the rice blast risk index (PRI).
 
 The pipelines run on **Rusalka**, NeverBlink's streaming RDF engine. Satellite indices are calculated in SPARQL with the **RDF Tensor** extension (`t:` functions), documented at <https://w3id.org/rdf-tensor/> ([paper](https://arxiv.org/abs/2504.19224)).
 
 ## Contents
 
-- `model/oberek-ontology-init/oberek_ontology.ttl`: the OBEREK ontology, built on SAREF (core, SAREF4WATR, SAREF4MARI), QUDT, WMO codes and the DDI summary statistic vocabulary.
+- `model/oberek-ontology-init/oberek_ontology.ttl`: the OBEREK ontology, built on SAREF (core, SAREF4WATR, SAREF4MARI), QUDT, WMO codes, and the DDI summary statistic vocabulary.
 - `model/oberek-metadata-init/oberek_metadata.ttl`: sites, devices, sensors, poll questions, locations, and the baselines and thresholds used to score the KEIs, each with its source.
 - `model/*`: lifting models (Jsonnet, YARRRML, LinkML) used by the ingestion pipelines, and `universal-sensor-export-processing`, which turns results into tables for CSV and JSON export.
 - `pipeline/*`: ingestion and calculation pipelines.
