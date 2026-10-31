@@ -2,7 +2,6 @@ type: pipeline
 steps:
   - type: !template kafka-windowed-subscribe
     topics:
-      - "oberek.raw.polls"
       - "oberek.calculated.kei1"
       - "oberek.calculated.kei2"
     windowSize: 1h

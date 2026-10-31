@@ -134,7 +134,7 @@ steps:
               ("North" "North"@en)
               ("South" "South"@en)
               ("SouthWest" "South-West"@en)
-              ("Global" "Global — l'Albufera"@en)
+              ("Global" "Global — l’Albufera"@en)
               }
               SERVICE <rusalka://local/oberek-metadata> {
                 ?locationUri a saref:FeatureOfInterest ;
@@ -178,7 +178,7 @@ steps:
               ("North" "North"@en)
               ("South" "South"@en)
               ("SouthWest" "South-West"@en)
-              ("Global" "Global — l'Albufera"@en)
+              ("Global" "Global — l’Albufera"@en)
               }
               SERVICE <rusalka://local/oberek-metadata> {
                 ?locationUri a saref:FeatureOfInterest ;
